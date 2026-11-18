@@ -109,7 +109,7 @@ void main() {
     });
 
     test('a persisted block is restored and exported', () async {
-      var now = DateTime.utc(2026, 1, 1);
+      final now = DateTime.utc(2026, 1, 1);
       final gate = HostRequestGate(now: () => now);
       final until = now.add(const Duration(minutes: 10));
       gate.restoreBlock('k|html', until.millisecondsSinceEpoch);
