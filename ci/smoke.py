@@ -76,7 +76,8 @@ def tap(pat, name, wait=2.5, required=True):
 
 def main():
     adb("install", "-r", "-g", APK)
-    print(adb("shell", "dumpsys", "package", PKG).split("versionName=")[1].split()[0], "installed")
+    info = adb("shell", "dumpsys", "package", PKG, check=False)
+    print("installed:", re.findall(r"versionName=\S+", info)[:1], "pkg line present:", PKG in info)
     adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
     adb("shell", "monkey", "-p", PKG, "-c", "android.intent.category.LAUNCHER", "1")
     time.sleep(12)
