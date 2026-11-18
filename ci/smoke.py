@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 
 PKG = "com.vanipy.unggun"
 APK = sys.argv[1]
+if "debug" in os.path.basename(APK):
+    PKG += ".debug"  # debug builds carry an applicationIdSuffix
 SHOTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shots")
 os.makedirs(SHOTS, exist_ok=True)
 FAILS = []
@@ -75,7 +77,7 @@ def tap(pat, name, wait=2.5, required=True):
 
 
 def main():
-    adb("install", "-r", "-g", APK)
+    print("install:", adb("install", "-r", "-g", APK).strip(), "package", PKG)
     info = adb("shell", "dumpsys", "package", PKG, check=False)
     print("installed:", re.findall(r"versionName=\S+", info)[:1], "pkg line present:", PKG in info)
     adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
