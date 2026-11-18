@@ -8,7 +8,7 @@ void main() {
     'io.alexrintt.plugins/sharedstorage/documentfile',
   );
   const documentTreeChannel = MethodChannel(
-    'dev.imranr.obtainium/document_tree',
+    'com.vanipy.unggun/document_tree',
   );
 
   Map<String, dynamic> permission(String uri) => {

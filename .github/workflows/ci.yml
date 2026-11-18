@@ -1,0 +1,42 @@
+name: unggun ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Flutter version
+        run: ./.flutter/bin/flutter --version
+      - run: ./.flutter/bin/flutter pub get
+      - name: Analyze
+        run: ./.flutter/bin/flutter analyze
+      - name: Unit and widget tests
+        run: ./.flutter/bin/flutter test
+      - name: Debug APK
+        run: ./.flutter/bin/flutter build apk --flavor normal --debug
+      - name: Package check
+        run: |
+          APK=$(ls build/app/outputs/flutter-apk/*normal*debug*.apk | head -1)
+          echo "$APK"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt" dump badging "$APK" | grep -E "^package:|application-label:"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unggun-debug-apk
+          path: build/app/outputs/flutter-apk/*.apk

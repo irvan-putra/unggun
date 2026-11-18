@@ -796,7 +796,7 @@ flutter pub get
 flutter analyze        # must be clean
 dart format --set-exit-if-changed .
 flutter run            # default flavour
-flutter build apk --flavor normal   # or use ./build.sh
+flutter build apk --flavor normal
 ```
 
 - **Flavours:** `normal` (default, `lib/main.dart`) and `fdroid` (`lib/main_fdroid.dart`,
@@ -805,8 +805,7 @@ flutter build apk --flavor normal   # or use ./build.sh
   (`android_package_installer`, `android_package_manager`, `shared_storage`,
   `shizuku_apk_installer`, `android_system_font`) — keep them pinned; don't
   switch to `ref: main`/`ref: master`.
-- `sign.sh` reads the keystore password from an env var and locates `apksigner` robustly;
-  `build.sh` / `docker/Dockerfile` handle reproducible/CI builds.
+- Signed releases are built by `.github/workflows/release.yml` (see README).
 - Run `flutter analyze` and `dart format --set-exit-if-changed .` locally before opening a PR.
 
 ### End-to-end tests (emulator)

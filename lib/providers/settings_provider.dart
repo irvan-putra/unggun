@@ -20,9 +20,9 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-const String obtainiumTempId = 'imranr98_obtainium_github.com';
-const String obtainiumId = 'dev.imranr.obtainium';
-const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
+const String obtainiumTempId = 'irvan-putra_unggun_github.com';
+const String obtainiumId = 'com.vanipy.unggun';
+const String obtainiumUrl = 'https://github.com/irvan-putra/unggun';
 
 /// Sentinel stored as the export directory on devices without a document-tree
 /// picker (typically TVs): exports go to `Downloads/Obtainium/` through

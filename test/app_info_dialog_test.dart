@@ -41,7 +41,7 @@ void main() {
       final settings = SettingsProvider()
         ..prefs = await SharedPreferences.getInstance();
       const app = App(
-        id: 'dev.imranr.obtainium',
+        id: 'com.vanipy.unggun',
         url: _url,
         author: 'ImranR98',
         name: 'Obtainium',

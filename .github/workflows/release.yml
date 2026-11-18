@@ -1,80 +1,79 @@
-name: Build and Release
+name: unggun signed release
 
+# Manual only. Builds the release APK, signs it with the unggun key from repository secrets,
+# verifies package, version and certificate, then publishes a GitHub pre-release.
 on:
   workflow_dispatch:
-    inputs:
-      beta:
-        type: boolean
-        description: Is beta?
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 60
+    env:
+      EXPECTED_CERT_SHA256: ""
     steps:
-      
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+          submodules: true
+      - uses: actions/setup-java@v4
         with:
-          channel: stable
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
-        with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
-          java-version: '21'
-
-      - name: Flutter Doctor
-        id: flutter_doctor
+          distribution: temurin
+          java-version: "21"
+      - run: ./.flutter/bin/flutter pub get
+      - name: Analyze and test
         run: |
-          flutter doctor -v
-
-      - name: Check submodule
+          ./.flutter/bin/flutter analyze
+          ./.flutter/bin/flutter test
+      - name: Read version
+        id: v
         run: |
-          git submodule update --init --recursive
-
-      - name: Extract Version
-        id: extract_version      
+          VER=$(sed -n 's/^version: \([0-9.]*\)+.*/\1/p' pubspec.yaml)
+          test -n "$VER"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+      - name: Build and sign
+        env:
+          KS_B64: ${{ secrets.UNGGUN_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.UNGGUN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UNGGUN_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.UNGGUN_KEY_PASSWORD }}
         run: |
-          VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
-          echo "beta=$BETA" >> $GITHUB_OUTPUT
-          TAG="v$VERSION"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Build APKs
+          set -euo pipefail
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/unggun.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/unggun.jks"
+            echo "storePassword=$KS_PASS"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASS"
+          } > android/key.properties
+          ./.flutter/bin/flutter build apk --flavor normal --release
+          rm -f android/key.properties "$RUNNER_TEMP/unggun.jks"
+      - name: Verify signature, package and version
+        shell: bash
         run: |
-          flutter pub get
-          # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
-          sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
-          # No key.properties exists in CI, so build.gradle.kts already sets
-          # signingConfig = null and produces unsigned APKs (signing happens
-          # separately in the sign.sh script).
-          flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
-          for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
-          flutter build apk --flavor fdroid -t lib/main_fdroid.dart && flutter build apk --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
-          rm -f ./build/app/outputs/flutter-apk/*.sha1
-          cp ./sign.sh ./build/app/outputs/flutter-apk/
-          ls -l ./build/app/outputs/flutter-apk/
-
-      - name: Save Unsigned APKs as Action Artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          path: build/app/outputs/flutter-apk/*
-
-      - name: Create Tag
-        uses: mathieudutour/github-tag-action@fcfbdceb3093f6d85a3b194740f8c6cec632f4e2 # v6.1
-        with:
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          custom_tag: "${{ steps.extract_version.outputs.tag }}"
-          tag_prefix: ""
-      
-      - name: Create Draft Release
-        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
-        with:
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
-          tag: "${{ steps.extract_version.outputs.tag }}"
-          prerelease: "${{ steps.extract_version.outputs.beta }}"
-          draft: "true"
-          generateReleaseNotes: true
+          set -euo pipefail
+          VER="${{ steps.v.outputs.version }}"
+          APK=$(ls build/app/outputs/flutter-apk/app-normal-release.apk)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/cert.txt
+          GOT=$(grep -m1 'certificate SHA-256 digest' /tmp/cert.txt | awk '{print toupper($NF)}')
+          test -n "$EXPECTED_CERT_SHA256"
+          test "$GOT" = "$EXPECTED_CERT_SHA256"
+          if "$BT/apksigner" verify --print-certs "$APK" | grep -q 'DEBUG'; then exit 1; fi
+          "$BT/aapt" dump badging "$APK" | tee /tmp/badging.txt | head -3
+          grep -q "package: name='com.vanipy.unggun'" /tmp/badging.txt
+          grep -q "versionName='${VER}'" /tmp/badging.txt
+          cp "$APK" "unggun-v${VER}.apk"
+          sha256sum "unggun-v${VER}.apk" | tee "unggun-v${VER}.apk.sha256"
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${{ steps.v.outputs.version }}"
+          cat > notes.md <<NOTES
+          unggun ${VER}: experimental fork of Obtainium 1.7.4 with its own package ID (com.vanipy.unggun) and bonfire icon. Installs next to Obtainium. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is in the attached .sha256 file. See NOTICE.md for changes from upstream.
+          NOTES
+          gh release create "v${VER}" "unggun-v${VER}.apk" "unggun-v${VER}.apk.sha256" \
+            --title "unggun ${VER}" --notes-file notes.md --prerelease --target "${GITHUB_SHA}"
