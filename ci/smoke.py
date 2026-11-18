@@ -40,8 +40,9 @@ def dump(name=None):
 def find(root, pat):
     rx = re.compile(pat, re.I)
     for n in root.iter("node"):
-        t = (n.get("text") or "") + "|" + (n.get("content-desc") or "")
-        if rx.search(t) and n.get("bounds"):
+        cands = [(n.get("text") or "").strip(), (n.get("content-desc") or "").strip()]
+        cands += [c.split("\n")[0] for c in cands]
+        if any(c and rx.search(c) for c in cands) and n.get("bounds"):
             m = re.findall(r"\d+", n.get("bounds"))
             l, t_, r, b = map(int, m)
             if r > l and b > t_:
@@ -59,7 +60,7 @@ def labels(root):
 
 
 def tap(pat, name, wait=2.5, required=True):
-    for _ in range(6):
+    for _ in range(3):
         root = dump(name + "-ui")
         hit = find(root, pat) if root is not None else None
         if hit:
