@@ -25,7 +25,23 @@ def shot(name):
         f.write(subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True).stdout)
 
 
+def clear_anr():
+    """Hosted emulators are slow; dismiss "isn't responding" system dialogs by choosing Wait."""
+    for _ in range(4):
+        x = adb("exec-out", "uiautomator", "dump", "/dev/tty", check=False)
+        if "isn't responding" not in x and "isn&apos;t responding" not in x:
+            return
+        m = re.search(r'content-desc="[^"]*" [^>]*?text="Wait"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x) or \
+            re.search(r'text="Wait"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+        if not m:
+            return
+        l, t, r, b = map(int, m.groups())
+        adb("shell", "input", "tap", str((l + r) // 2), str((t + b) // 2), check=False)
+        time.sleep(3)
+
+
 def dump(name=None):
+    clear_anr()
     for _ in range(3):
         adb("shell", "uiautomator", "dump", "/sdcard/ui.xml", check=False)
         x = adb("exec-out", "cat", "/sdcard/ui.xml", check=False)
@@ -82,6 +98,13 @@ def main():
     info = adb("shell", "dumpsys", "package", PKG, check=False)
     print("installed:", re.findall(r"versionName=\S+", info)[:1], "pkg line present:", PKG in info)
     adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
+    adb("wait-for-device")
+    for _ in range(30):
+        if adb("shell", "getprop", "sys.boot_completed", check=False).strip() == "1":
+            break
+        time.sleep(3)
+    time.sleep(45)  # let the launcher and system services settle on the slow hosted emulator
+    clear_anr()
     adb("shell", "monkey", "-p", PKG, "-c", "android.intent.category.LAUNCHER", "1")
     time.sleep(12)
     shot("01-first-launch")
