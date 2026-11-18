@@ -55,6 +55,10 @@ def dump(name=None):
 def find(root, pat):
     rx = re.compile(pat, re.I)
     for n in root.iter("node"):
+        # DocumentsUI adds a Preview control before the filename. Preview is
+        # not selection and leaves the picker open. Select the filename row.
+        if "unggun-synthetic" in pat and (n.get("content-desc") or "").startswith("Preview the file"):
+            continue
         cands = [(n.get("text") or "").strip(), (n.get("content-desc") or "").strip()]
         cands += [c.split("\n")[0] for c in cands]
         if any(c and rx.search(c) for c in cands) and n.get("bounds"):
