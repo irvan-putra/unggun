@@ -1,6 +1,6 @@
 # Android launcher presentation correction
 
-Source-only correction after0.1.3, no new signed release.
+Prepared for the approved0.1.4/code5 test release. Publication requires final checks and signed workflow success.
 
 The launcher label is lowercase `unggun`. The bonfire artwork is unchanged. Legacy icons already used the family bottom strip, but the Android26+ adaptive foreground floated its version text without that strip. The generator now maps the same visible face into the centre72dp of Android's108dp adaptive layer. The visible strip starts at76%, the numbers sit at88%, and the font is DejaVu Sans Bold at11.5% of the visible face, matching the Tuju family generator. Themed icons have cut-out numerals so the strip stays readable. The TV banner name is lowercase too. Export folder naming is unchanged to avoid moving user data.
 

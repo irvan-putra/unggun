@@ -74,7 +74,7 @@ jobs:
         run: |
           VER="${{ steps.v.outputs.version }}"
           cat > notes.md <<NOTES
-          unggun ${VER}: experimental fork of Obtainium 1.7.4 with its own package ID (com.vanipy.unggun) and bonfire icon. Installs next to Obtainium. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is in the attached .sha256 file. See NOTICE.md for changes from upstream.
+          unggun ${VER}: experimental fork of Obtainium 1.7.4 with its own package ID (com.vanipy.unggun) and bonfire icon. Installs next to Obtainium. This update fixes the lowercase launcher name and consistent bottom-strip version badge across legacy, adaptive and themed icons. The bonfire is preserved. Install over the existing unggun app, do not uninstall or clear storage. No new rate-limit/background behavior is claimed by this presentation update. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is in the attached .sha256 file. See NOTICE.md for changes from upstream.
           NOTES
           gh release create "v${VER}" "unggun-v${VER}.apk" "unggun-v${VER}.apk.sha256" \
             --title "unggun ${VER}" --notes-file notes.md --prerelease --target "${GITHUB_SHA}"
