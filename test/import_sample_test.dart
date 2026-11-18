@@ -18,7 +18,7 @@ void main() {
     expect(apps.length, 14);
     expect(apps.every((a) => a.url.startsWith('https://github.com/')), isTrue);
     expect(apps.every((a) => a.id.startsWith('com.vanipy.')), isTrue);
-    final settings = jsonDecode(apps.first.additionalSettings) as Map;
+    final settings = apps.first.additionalSettings;
     expect(settings['exemptFromBackgroundUpdates'], true);
     expect(settings['includePrereleases'], true);
     expect(settings['filterReleaseTitlesByRegEx'], 'smoke|debug');
