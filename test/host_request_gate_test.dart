@@ -65,7 +65,7 @@ void main() {
       await gate.run('host-e', 'host-e|api', 2, () async {});
     });
 
-    test('blocks until GitHub x-ratelimit-reset on a 200 with none left', () async {
+    test('blocks until GitHub x-ratelimit-reset on 200 with none left', () async {
       var now = DateTime.utc(2026, 1, 1);
       final gate = HostRequestGate(now: () => now);
       final reset = now.add(const Duration(minutes: 42));
@@ -75,7 +75,7 @@ void main() {
       });
       var called = false;
       await expectLater(
-        gate.run('api.github.com', 'api.github.com|html', 2, () async {
+        () => gate.run('api.github.com', 'api.github.com|html', 2, () async {
           called = true;
         }),
         throwsA(
