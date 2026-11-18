@@ -5,6 +5,7 @@
         android:label="@string/label"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:banner="@drawable/tv_banner"
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true"

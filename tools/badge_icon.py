@@ -172,44 +172,45 @@ def write_extra(root, base):
     ic = bg.resize((120, 120), I.LANCZOS)
     ban.alpha_composite(ic, (30, 30))
     bd = ImageDraw.Draw(ban)
-    bd.text((170, 90), "Unggun", font=font(34), fill=(255, 255, 255, 255), anchor="lm")
+    bd.text((170, 90), "unggun", font=font(34), fill=(255, 255, 255, 255), anchor="lm")
     ban.save(os.path.join(root, "android", "app", "src", "main", "res", "drawable-xhdpi", "tv_banner.png"), optimize=True)
 
 
 def write_adaptive(root, version):
-    """Adaptive icon (API 26+): flat background colour, bonfire + version foreground, and a
-    monochrome layer for themed icons. Foreground content stays inside the 66dp safe zone."""
+    """Map the same 72dp face into the centre of Android's 108dp layers.
+
+    The 18dp overscan on each side is not part of the visible face. Keep the
+    family strip at 76% and text at 88% of that face, not of the 108dp layer.
+    """
     res = os.path.join(root, "android", "app", "src", "main", "res")
+    T = 864
+    face = 576
+    inset = (T - face) // 2
+    fg = Image.new("RGBA", (T, T), (0, 0, 0, 0))
     art, d = new_layer()
     bonfire_art(d, None)
-    # crop the art to its bounding box, then fit it into the safe zone with the version below
-    box = art.getbbox()
-    pic = art.crop(box)
-    T = 864  # 2x of 432 for quality, downsized after
-    k = (T * 0.37) / max(pic.size)
-    pic = pic.resize((int(pic.width * k), int(pic.height * k)), Image.LANCZOS)
-    fg = Image.new("RGBA", (T, T), (0, 0, 0, 0))
-    fg.alpha_composite(pic, ((T - pic.width) // 2, int(T * 0.56) - pic.height))
-    txt = Image.new("RGBA", (T, T), (0, 0, 0, 0))
-    ImageDraw.Draw(txt).text((T / 2, T * 0.65), version, font=font(int(T * 0.075)), fill=(255, 255, 255, 255), anchor="mm")
-    fg.alpha_composite(txt)
-    assert_inside_circle(fg, "adaptive foreground", T, r=0.305)
-    mono = Image.new("RGBA", (T, T), (255, 255, 255, 255))
-    mono.putalpha(fg.getchannel("A").point(lambda v: 255 if v > 8 else 0))
+    picture = art.resize((face, face), Image.LANCZOS)
+    fg.alpha_composite(picture, (inset, inset))
+    strip_y = inset + int(face * STRIP_TOP)
+    ImageDraw.Draw(fg).rectangle([0, strip_y, T, T], fill=(20, 16, 24, 255))
+    text = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+    ImageDraw.Draw(text).text((T / 2, inset + face * .88), version,
+        font=font(int(face * TEXT_SIZE)), fill="white", anchor="mm")
+    assert_inside_circle(text, "adaptive version", T, r=.305)
+    assert_inside_circle(picture, "adaptive picture face", face)
+    fg.alpha_composite(text)
+    # Themed icons have one ink colour. Knock numbers OUT of the strip so
+    # they remain readable instead of becoming a solid rectangle.
+    mono_alpha = Image.new("L", (T, T), 0)
+    mono_alpha.paste(picture.getchannel("A"), (inset, inset))
+    ImageDraw.Draw(mono_alpha).rectangle([0, strip_y, T, T], fill=255)
+    mono_alpha = ImageChops.subtract(mono_alpha, text.getchannel("A"))
+    mono = Image.new("RGBA", (T, T), "white")
+    mono.putalpha(mono_alpha)
+    out = os.path.join(res, "drawable-xxxhdpi")
+    os.makedirs(out, exist_ok=True)
     for name, img in (("ic_launcher_foreground.png", fg), ("ic_launcher_monochrome.png", mono)):
-        out = os.path.join(res, "drawable-xxxhdpi")
-        os.makedirs(out, exist_ok=True)
         img.resize((432, 432), Image.LANCZOS).save(os.path.join(out, name), optimize=True)
-    xml = os.path.join(res, "mipmap-anydpi-v26")
-    os.makedirs(xml, exist_ok=True)
-    body = ('<?xml version="1.0" encoding="utf-8"?>\n'
-            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-            '  <background android:drawable="@color/ic_launcher_background"/>\n'
-            '  <foreground android:drawable="@drawable/ic_launcher_foreground"/>\n'
-            '  <monochrome android:drawable="@drawable/ic_launcher_monochrome"/>\n'
-            '</adaptive-icon>\n')
-    for n in ("ic_launcher.xml", "ic_launcher_round.xml"):
-        open(os.path.join(xml, n), "w").write(body)
 
 
 def main():

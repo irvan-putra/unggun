@@ -15,6 +15,14 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify deterministic launcher resources
+        run: |
+          pip install Pillow==12.3.0 CairoSVG==2.8.2
+          python tools/badge_icon.py "$(sed -n 's/^version: \([0-9.]*\)+.*/\1/p' pubspec.yaml)"
+          git diff --exit-code -- android/app/src/main/res
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
