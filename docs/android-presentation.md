@@ -7,3 +7,5 @@ The launcher label is lowercase `unggun`. The bonfire artwork is unchanged. Lega
 Regenerate using the existing pinned `tools/badge_icon.py X.Y.Z`; CI checks the resulting resources. Legacy, adaptive circle/rounded-square and themed masks were compared with the actual Tuju resources. These renders are resource previews, not a phone launcher screenshot.
 
 An installable update needs a separately approved new version/code and same-signing-key release. The current0.1.3 APK is not changed by a source commit. No uninstall, data clearing, signing, rate-limit or background behavior change is part of this correction.
+
+The exact DejaVu font file is vendored with its license in `tools/fonts/` and its SHA-256 is checked. This prevents runner distribution font differences from changing the badge.
