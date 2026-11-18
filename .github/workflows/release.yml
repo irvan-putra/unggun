@@ -13,20 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      EXPECTED_CERT_SHA256: ""
+      EXPECTED_CERT_SHA256: "1F7A762C99D357B076968C9BCEFEDF45FF9B65231C60AF2D43A5160783D5BF29"
     steps:
       - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          submodules: true
+          channel: stable
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-      - run: ./.flutter/bin/flutter pub get
+      - run: flutter pub get
       - name: Analyze and test
         run: |
-          ./.flutter/bin/flutter analyze
-          ./.flutter/bin/flutter test
+          flutter analyze
+          flutter test
       - name: Read version
         id: v
         run: |
@@ -48,7 +49,7 @@ jobs:
             echo "keyAlias=$KEY_ALIAS"
             echo "keyPassword=$KEY_PASS"
           } > android/key.properties
-          ./.flutter/bin/flutter build apk --flavor normal --release
+          flutter build apk --flavor normal --release
           rm -f android/key.properties "$RUNNER_TEMP/unggun.jks"
       - name: Verify signature, package and version
         shell: bash

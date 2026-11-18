@@ -15,21 +15,22 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          submodules: true
+          channel: stable
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
       - name: Flutter version
-        run: ./.flutter/bin/flutter --version
-      - run: ./.flutter/bin/flutter pub get
+        run: flutter --version
+      - run: flutter pub get
       - name: Analyze
-        run: ./.flutter/bin/flutter analyze
+        run: flutter analyze
       - name: Unit and widget tests
-        run: ./.flutter/bin/flutter test
+        run: flutter test
       - name: Debug APK
-        run: ./.flutter/bin/flutter build apk --flavor normal --debug
+        run: flutter build apk --flavor normal --debug
       - name: Package check
         run: |
           APK=$(ls build/app/outputs/flutter-apk/*normal*debug*.apk | head -1)

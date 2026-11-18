@@ -22,10 +22,10 @@ Download `unggun-vX.Y.Z.apk` and its `.sha256` from the latest GitHub release, c
 
 ## Build
 
-    git clone --recurse-submodules https://github.com/irvan-putra/unggun
+    git clone https://github.com/irvan-putra/unggun
     cd unggun
-    ./.flutter/bin/flutter pub get
-    ./.flutter/bin/flutter build apk --flavor normal --debug
+    flutter pub get
+    flutter build apk --flavor normal --debug
 
 CI (`.github/workflows/ci.yml`) runs analysis and tests and builds a debug APK. The manual `release.yml` workflow builds the release APK, signs it with the repository's signing secrets (`UNGGUN_KEYSTORE_B64`, `UNGGUN_STORE_PASSWORD`, `UNGGUN_KEY_ALIAS`, `UNGGUN_KEY_PASSWORD`), verifies package and certificate, and publishes a GitHub pre-release.
 
