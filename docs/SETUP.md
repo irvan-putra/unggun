@@ -1,6 +1,6 @@
 # Setting up Unggun
 
-Status of this guide: written from the source code and the upstream Obtainium wiki. The labels below come from `assets/translations/en.json`. The signed release APK and the Import screen have **not** been run by the maintainer, so treat the steps as untested and report differences.
+Status of this guide: written from the source code and the upstream Obtainium wiki. The labels below come from `assets/translations/en.json`. The Import screen, imports of a whole list, and automatic updates have **not** been exercised by the maintainer, so treat those steps as untested and report differences.
 
 ## 1. Install
 
