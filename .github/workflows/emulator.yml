@@ -1,0 +1,63 @@
+name: unggun emulator smoke test
+
+# Installs an APK on an Android emulator, launches it, takes screenshots and imports two
+# synthetic entries (public repos only). Optional input: a release tag to test the published APK.
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Test the signed APK from this release tag instead of a fresh debug build"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Get the APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p ci/apk
+          if [ -n "$TAG" ]; then
+            gh release download "$TAG" --pattern '*.apk' --dir ci/apk
+          else
+            flutter pub get
+            flutter build apk --flavor normal --debug --target-platform android-x64
+            cp build/app/outputs/flutter-apk/*normal*debug*.apk ci/apk/
+          fi
+          ls -la ci/apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: python3 ci/smoke.py "$(ls ci/apk/*.apk | head -1)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unggun-emulator-screenshots
+          path: ci/shots/*
+          if-no-files-found: warn
+          retention-days: 7

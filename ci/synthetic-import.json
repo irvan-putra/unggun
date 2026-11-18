@@ -1,0 +1,18 @@
+{
+ "apps": [
+  {
+   "id": "com.example.appone",
+   "url": "https://github.com/example/app-one",
+   "author": "example",
+   "name": "app-one",
+   "additionalSettings": "{\"includePrereleases\": true, \"fallbackToOlderReleases\": true, \"filterReleaseTitlesByRegEx\": \"smoke|debug\", \"invertReleaseTitlesFilter\": true, \"exemptFromBackgroundUpdates\": true}"
+  },
+  {
+   "id": "com.example.apptwo",
+   "url": "https://github.com/example/app-two",
+   "author": "example",
+   "name": "app-two",
+   "additionalSettings": "{\"includePrereleases\": true, \"fallbackToOlderReleases\": true, \"filterReleaseTitlesByRegEx\": \"smoke|debug\", \"invertReleaseTitlesFilter\": true, \"exemptFromBackgroundUpdates\": true}"
+  }
+ ]
+}

@@ -176,12 +176,49 @@ def write_extra(root, base):
     ban.save(os.path.join(root, "android", "app", "src", "main", "res", "drawable-xhdpi", "tv_banner.png"), optimize=True)
 
 
+def write_adaptive(root, version):
+    """Adaptive icon (API 26+): flat background colour, bonfire + version foreground, and a
+    monochrome layer for themed icons. Foreground content stays inside the 66dp safe zone."""
+    res = os.path.join(root, "android", "app", "src", "main", "res")
+    art, d = new_layer()
+    bonfire_art(d, None)
+    # crop the art to its bounding box, then fit it into the safe zone with the version below
+    box = art.getbbox()
+    pic = art.crop(box)
+    T = 864  # 2x of 432 for quality, downsized after
+    k = (T * 0.37) / max(pic.size)
+    pic = pic.resize((int(pic.width * k), int(pic.height * k)), Image.LANCZOS)
+    fg = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+    fg.alpha_composite(pic, ((T - pic.width) // 2, int(T * 0.56) - pic.height))
+    txt = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+    ImageDraw.Draw(txt).text((T / 2, T * 0.65), version, font=font(int(T * 0.075)), fill=(255, 255, 255, 255), anchor="mm")
+    fg.alpha_composite(txt)
+    assert_inside_circle(fg, "adaptive foreground", T, r=0.305)
+    mono = Image.new("RGBA", (T, T), (255, 255, 255, 255))
+    mono.putalpha(fg.getchannel("A").point(lambda v: 255 if v > 8 else 0))
+    for name, img in (("ic_launcher_foreground.png", fg), ("ic_launcher_monochrome.png", mono)):
+        out = os.path.join(res, "drawable-xxxhdpi")
+        os.makedirs(out, exist_ok=True)
+        img.resize((432, 432), Image.LANCZOS).save(os.path.join(out, name), optimize=True)
+    xml = os.path.join(res, "mipmap-anydpi-v26")
+    os.makedirs(xml, exist_ok=True)
+    body = ('<?xml version="1.0" encoding="utf-8"?>\n'
+            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+            '  <background android:drawable="@color/ic_launcher_background"/>\n'
+            '  <foreground android:drawable="@drawable/ic_launcher_foreground"/>\n'
+            '  <monochrome android:drawable="@drawable/ic_launcher_monochrome"/>\n'
+            '</adaptive-icon>\n')
+    for n in ("ic_launcher.xml", "ic_launcher_round.xml"):
+        open(os.path.join(xml, n), "w").write(body)
+
+
 def main():
     version = parse_version(sys.argv)
     root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     res = os.path.join(root, "android", "app", "src", "main", "res")
     write_densities(unggun(version), res)
     write_extra(root, version)
+    write_adaptive(root, version)
     print("wrote icons for", version)
 
 

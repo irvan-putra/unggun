@@ -46,7 +46,7 @@ class MainActivity : FlutterActivity() {
         const val DOCUMENT_TREE_REQUEST_CODE = 5209
 
         /** Sub-folder of Downloads used for exports on picker-less devices. */
-        const val EXPORT_FOLDER = "Obtainium"
+        const val EXPORT_FOLDER = "Unggun"
 
         /** Hard ceiling for a tracked external install (5 minutes). */
         const val INSTALL_TIMEOUT_MS = 300_000L
