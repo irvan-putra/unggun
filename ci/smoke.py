@@ -113,8 +113,10 @@ def main():
     if not pid:
         FAILS.append("app process not running after launch")
     # first-run dialogs, if any
-    for pat in (r"^(okay|ok|got it|allow|skip|close)$",):
-        tap(pat, "02-dismiss", required=False)
+    # the app shows two start-up dialogs in a row (Welcome, then a platform note), each with "Okay"
+    for i in range(3):
+        if not tap(r"^okay$", "02-dismiss-%d" % i, required=False):
+            break
 
     root = dump("02b-home-ui")
     print("home:", labels(root)[:40] if root is not None else None)
