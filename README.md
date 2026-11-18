@@ -13,6 +13,8 @@ It is a fork of [Obtainium](https://github.com/ImranR98/Obtainium) by Imran Remt
 
 Download `unggun-vX.Y.Z.apk` and its `.sha256` from the latest GitHub release, compare the SHA-256, then open the APK. The release notes list the signing certificate SHA-256 to check.
 
+Setup steps: [docs/SETUP.md](docs/SETUP.md).
+
 ## Differences from upstream
 
 - Different package ID, so it installs next to Obtainium and does not update it.

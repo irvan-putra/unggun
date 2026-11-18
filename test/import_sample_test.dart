@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/app_json_migration.dart';
 
-// Code-level check of the import path with a bare-list import file of public repositories
+// Code-level check of the import path with a bare-list import file of example entries
 // (the same shape the Import screen accepts). It does not exercise the UI or storage.
 void main() {
   test('import sample parses into apps with their per-app settings', () {
@@ -15,9 +15,9 @@ void main() {
     final apps = (decoded as List)
         .map((e) => appFromStoredJson(Map<String, dynamic>.from(e as Map)))
         .toList();
-    expect(apps.length, 14);
+    expect(apps.length, 3);
     expect(apps.every((a) => a.url.startsWith('https://github.com/')), isTrue);
-    expect(apps.every((a) => a.id.startsWith('com.vanipy.')), isTrue);
+    expect(apps.every((a) => a.id.startsWith('com.example.')), isTrue);
     final settings = apps.first.additionalSettings;
     expect(settings['exemptFromBackgroundUpdates'], true);
     expect(settings['includePrereleases'], true);

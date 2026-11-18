@@ -154,7 +154,7 @@ def main():
     root = dump("10-apps-ui")
     shot("10-apps")
     names = " ".join(labels(root)) if root is not None else ""
-    for want in ("tuju", "unggah"):
+    for want in ("app-one", "app-two"):
         if want not in names.lower():
             FAILS.append("imported app %r not visible on the apps page" % want)
     # crash check
