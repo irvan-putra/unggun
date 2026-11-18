@@ -27,15 +27,14 @@ def shot(name):
 
 def clear_anr():
     """Hosted emulators are slow; dismiss "isn't responding" system dialogs by choosing Wait."""
-    for _ in range(4):
-        x = adb("exec-out", "uiautomator", "dump", "/dev/tty", check=False)
-        if "isn't responding" not in x and "isn&apos;t responding" not in x:
-            return
-        m = re.search(r'content-desc="[^"]*" [^>]*?text="Wait"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x) or \
-            re.search(r'text="Wait"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+    for _ in range(5):
+        adb("shell", "uiautomator", "dump", "/sdcard/anr.xml", check=False)
+        x = adb("exec-out", "cat", "/sdcard/anr.xml", check=False)
+        m = re.search(r'resource-id="android:id/aerr_wait"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
         if not m:
             return
         l, t, r, b = map(int, m.groups())
+        print("ANR dialog, tapping Wait")
         adb("shell", "input", "tap", str((l + r) // 2), str((t + b) // 2), check=False)
         time.sleep(3)
 
