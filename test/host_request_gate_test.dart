@@ -64,5 +64,89 @@ void main() {
       now = now.add(const Duration(seconds: 1));
       await gate.run('host-e', 'host-e|api', 2, () async {});
     });
+
+    test('blocks until GitHub x-ratelimit-reset on a 200 with none left', () async {
+      var now = DateTime.utc(2026, 1, 1);
+      final gate = HostRequestGate(now: () => now);
+      final reset = now.add(const Duration(minutes: 42));
+      gate.observe('api.github.com|html', 200, {
+        'x-ratelimit-remaining': '0',
+        'x-ratelimit-reset': '${reset.millisecondsSinceEpoch ~/ 1000}',
+      });
+      var called = false;
+      await expectLater(
+        gate.run('api.github.com', 'api.github.com|html', 2, () async {
+          called = true;
+        }),
+        throwsA(
+          isA<RateLimitError>().having(
+            (e) => e.remainingMinutes,
+            'remainingMinutes',
+            42,
+          ),
+        ),
+      );
+      expect(called, false);
+      now = now.add(const Duration(minutes: 43));
+      await gate.run('api.github.com', 'api.github.com|html', 2, () async {});
+    });
+
+    test('remaining quota does not block; 403 Retry-After does', () async {
+      var now = DateTime.utc(2026, 1, 1);
+      final gate = HostRequestGate(now: () => now);
+      gate.observe('h|html', 200, {
+        'x-ratelimit-remaining': '10',
+        'x-ratelimit-reset': '${now.millisecondsSinceEpoch ~/ 1000 + 3600}',
+      });
+      await gate.run('h', 'h|html', 2, () async {});
+      gate.observe('h|html', 403, {'retry-after': '120'});
+      expect(
+        () => gate.run('h', 'h|html', 2, () async {}),
+        throwsA(isA<RateLimitError>()),
+      );
+      now = now.add(const Duration(seconds: 121));
+      await gate.run('h', 'h|html', 2, () async {});
+    });
+
+    test('a persisted block is restored and exported', () async {
+      var now = DateTime.utc(2026, 1, 1);
+      final gate = HostRequestGate(now: () => now);
+      final until = now.add(const Duration(minutes: 10));
+      gate.restoreBlock('k|html', until.millisecondsSinceEpoch);
+      expect(gate.blockedUntilMillis('k|html'), until.millisecondsSinceEpoch);
+      expect(
+        () => gate.run('k', 'k|html', 2, () async {}),
+        throwsA(isA<RateLimitError>()),
+      );
+    });
+
+    test('secondary limit 403 without Retry-After waits a minute', () async {
+      var now = DateTime.utc(2026, 1, 1);
+      final gate = HostRequestGate(now: () => now);
+      gate.observe(
+        'g|html',
+        403,
+        {},
+        body: '{"message":"You have exceeded a secondary rate limit."}',
+      );
+      expect(
+        () => gate.run('g', 'g|html', 2, () async {}),
+        throwsA(isA<RateLimitError>()),
+      );
+      now = now.add(const Duration(seconds: 61));
+      await gate.run('g', 'g|html', 2, () async {});
+    });
+
+    test('exhausted quota with a missing or past reset still pauses', () async {
+      var now = DateTime.utc(2026, 1, 1);
+      final gate = HostRequestGate(now: () => now);
+      gate.observe('m|html', 403, {'x-ratelimit-remaining': '0'});
+      expect(
+        () => gate.run('m', 'm|html', 2, () async {}),
+        throwsA(isA<RateLimitError>()),
+      );
+      now = now.add(const Duration(seconds: 61));
+      await gate.run('m', 'm|html', 2, () async {});
+    });
   });
 }

@@ -44,6 +44,8 @@ class GitHub extends AppSource {
 
   GitHub({bool hostChanged = false}) {
     name = 'GitHub';
+    enableHostRequestGate = true;
+    maxConcurrentRequestsPerHost = 2;
     hosts = ['github.com'];
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;

@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -159,13 +160,25 @@ abstract class AppSource {
     final host = uri.host;
     final blockKey = '$host|${_hostGateBucket(uri)}';
     final gate = HostRequestGate.instance;
+    final prefKey = 'hostBlockUntil|$blockKey';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final persisted = prefs.getInt(prefKey);
+    if (persisted != null) gate.restoreBlock(blockKey, persisted);
     final response = await gate.run(
       host,
       blockKey,
       maxConcurrentRequestsPerHost,
       perform,
     );
-    gate.observe(blockKey, response.statusCode, response.headers);
+    gate.observe(
+      blockKey,
+      response.statusCode,
+      response.headers,
+      body: response.statusCode == 403 ? response.body : null,
+    );
+    final until = gate.blockedUntilMillis(blockKey);
+    if (until != null && until != persisted) await prefs.setInt(prefKey, until);
     return response;
   }
 

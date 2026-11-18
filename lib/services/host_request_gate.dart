@@ -50,7 +50,17 @@ class HostRequestGate {
 
   /// Records a completed response and blocks that request class when it
   /// carries a Cloudflare challenge or a rate-limit signal.
-  void observe(String blockKey, int statusCode, Map<String, String> headers) {
+  void observe(
+    String blockKey,
+    int statusCode,
+    Map<String, String> headers, {
+    String? body,
+  }) {
+    final reset = _githubQuotaReset(headers);
+    if (reset != null) {
+      _blockUntil(blockKey, reset);
+      return;
+    }
     if (statusCode != 403 && statusCode != 429 && statusCode != 503) return;
     final challenge =
         headers['cf-mitigated']?.toLowerCase().trim() == 'challenge';
@@ -58,7 +68,10 @@ class HostRequestGate {
       _blockUntil(blockKey, _now().add(challengeBlockDuration));
       return;
     }
-    if (statusCode == 429 || statusCode == 503) {
+    if (statusCode == 429 ||
+        statusCode == 503 ||
+        retryAfterOn403(statusCode, headers) ||
+        (statusCode == 403 && _isSecondaryLimitBody(body))) {
       final retryAfter = int.tryParse(headers['retry-after']?.trim() ?? '');
       _blockUntil(
         blockKey,
@@ -70,6 +83,41 @@ class HostRequestGate {
       );
     }
   }
+
+  static bool _isSecondaryLimitBody(String? body) =>
+      body != null && body.toLowerCase().contains('secondary rate limit');
+
+  static bool retryAfterOn403(int statusCode, Map<String, String> headers) =>
+      statusCode == 403 &&
+      (int.tryParse(headers['retry-after']?.trim() ?? '') ?? 0) > 0;
+
+  /// GitHub reports an exhausted quota with x-ratelimit-remaining 0 and the
+  /// reset time in x-ratelimit-reset (epoch seconds), on any status.
+  DateTime? _githubQuotaReset(Map<String, String> headers) {
+    if (headers['x-ratelimit-remaining']?.trim() != '0') return null;
+    final epoch = int.tryParse(headers['x-ratelimit-reset']?.trim() ?? '');
+    if (epoch == null) {
+      // Exhausted but no usable reset time: wait the documented minimum.
+      return _now().add(defaultRateLimitBlockDuration);
+    }
+    final until = DateTime.fromMillisecondsSinceEpoch(
+      epoch * 1000,
+      isUtc: true,
+    );
+    return until.isAfter(_now())
+        ? until
+        : _now().add(defaultRateLimitBlockDuration);
+  }
+
+  /// Epoch milliseconds a class is blocked until, or null. For persistence.
+  int? blockedUntilMillis(String blockKey) =>
+      _blockedUntil[blockKey]?.millisecondsSinceEpoch;
+
+  /// Restores a persisted block (e.g. from another isolate or a previous run).
+  void restoreBlock(String blockKey, int untilMillis) => _blockUntil(
+    blockKey,
+    DateTime.fromMillisecondsSinceEpoch(untilMillis, isUtc: true),
+  );
 
   void _blockUntil(String blockKey, DateTime until) {
     final current = _blockedUntil[blockKey];
