@@ -90,9 +90,12 @@ def main():
     if not pid:
         FAILS.append("app process not running after launch")
     # first-run dialogs, if any
-    for pat in (r"^(ok|got it|continue|allow|skip|close)$",):
+    for pat in (r"^(okay|ok|got it|allow|skip|close)$",):
         tap(pat, "02-dismiss", required=False)
 
+    root = dump("02b-home-ui")
+    print("home:", labels(root)[:40] if root is not None else None)
+    shot("02b-home")
     # synthetic import file: two public repos, same schema as an export
     apps = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "synthetic-import.json")))
     adb("push", os.path.join(os.path.dirname(os.path.abspath(__file__)), "synthetic-import.json"),
