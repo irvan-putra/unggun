@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unggun release checker</title>
+<style>
+:root{color-scheme:light dark;--bg:#f7f4ef;--fg:#251d16;--card:#fff;--ac:#c2570c;--mut:#6f6459;--bd:#e0d8cd;--ok:#1d7a46;--up:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#18140f;--fg:#efe8de;--card:#221c15;--ac:#f59a52;--mut:#a89c8d;--bd:#37302a;--ok:#5fcf8f;--up:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:760px;margin:0 auto;padding:16px}.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:12px 0}
+input[type=text]{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);width:100%}
+button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;margin:4px 6px 0 0}@media(prefers-color-scheme:dark){button{color:#1b1005}}
+button.alt{background:var(--mut)}.mut{color:var(--mut);font-size:.9em}a{color:var(--ac)}code{word-break:break-all}
+.up{color:var(--up);font-weight:600}.ok{color:var(--ok);font-weight:600}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style></head><body><main>
+<h1>Unggun release checker</h1>
+<p>Unggun installs and updates Android apps straight from their release pages. A browser can't install apps, so this page does the checking part: it looks up the latest release of each GitHub project you list and gives you the APK download link. You install on your phone as usual.</p>
+<p class="mut">Your list stays in this browser. Lookups go from your browser straight to GitHub's public API (no account, no token; GitHub allows about 60 lookups an hour per network). Nothing is installed or notified from here. A browser can't see what is installed on your phone, so type the version you have if you want an "update available" flag. Not validated on a physical phone.</p>
+<div class="card"><label>GitHub project (owner/repo, a github.com link, or an obtainium:// app link)<input id="u" type="text" placeholder="owner/repo" autocomplete="off"></label>
+<button id="add">Add</button> <button id="ex" class="alt">Add Unggun itself</button> <span id="msg" class="mut"></span></div>
+<div class="row"><button id="all">Check all</button><span class="mut" id="rl"></span></div>
+<div id="list"></div>
+<p class="mut"><a href="https://github.com/irvan-putra/unggun">Source (GPL-3.0)</a> · Unggun is a fork of <a href="https://github.com/ImranR98/Obtainium">Obtainium</a>. Check each APK's SHA-256 (shown when GitHub provides it) and the signing certificate in the release notes before installing.</p>
+<script src="app.js"></script></main></body></html>
