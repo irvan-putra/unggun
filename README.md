@@ -15,6 +15,8 @@ Download `unggun-vX.Y.Z.apk` and its `.sha256` from the latest GitHub release, c
 
 Setup steps: [docs/SETUP.md](docs/SETUP.md).
 
+Research: [docs/NATIVE-RECODE-SPEC.md](docs/NATIVE-RECODE-SPEC.md) - a specification for a possible from-scratch native recode (draft for decision, nothing built).
+
 ## Differences from upstream
 
 - Different package ID, so it installs next to Obtainium and does not update it.
