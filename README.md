@@ -1,39 +1,38 @@
-# Unggun
+# unggun
 
-Unggun (Indonesian for bonfire) installs and updates Android apps straight from their release pages, such as GitHub releases, and notifies you when a new release is out.
+Unggun (Indonesian for bonfire) tracks the GitHub projects you have installed on your Android phone, tells you when a new release is out, and installs it through the stock Android installer with as little tapping as Android allows.
 
-It is a fork of [Obtainium](https://github.com/ImranR98/Obtainium) by Imran Remtulla and contributors, based on upstream version 1.7.4 (commit `35c3e7fea4f341a716eca4bb3fc625319ce965ab`). The code is licensed GPL-3.0, the same as upstream. See `NOTICE.md` for what changed.
+Unggun is a native Android app (Kotlin) that reimplements the GitHub-source semantics of [Obtainium](https://github.com/ImranR98/Obtainium) 1.7.4. This repository is forked from upstream; the original work is by Imran Remtulla and the Obtainium contributors, and the code remains GPL-3.0. See `NOTICE.md` for what the fork changed and `docs/NATIVE-RECODE-SPEC.md` for the native recode specification.
 
-- Package: `com.vanipy.unggun`, launcher name `Unggun`
-- Current version: see `pubspec.yaml` (X.Y.Z, shown as a badge on the launcher icon)
-- Experimental. Unsigned-by-Google, installed outside Play. Not affiliated with upstream; upstream issues are not the place for Unggun bugs.
-- Upstream documentation applies to most features: https://wiki.obtainium.imranr.dev/
+- Package: `com.vanipy.unggun`, launcher name `unggun`
+- Current app: the native recode under `native/`, released as 1.0.x pre-releases
+- The original Flutter fork is still in the tree (`lib/`, `android/`) but is superseded by the native app
+- Experimental. Installed outside Play, not affiliated with upstream; please do not file Unggun bugs in upstream's tracker
+
+## What it does
+
+- Tracks GitHub repositories you add (paste one URL per line)
+- Checks for new releases on demand, with a per-app prerelease toggle
+- Notifies you when an update is available; per-app "track only" mode notifies without installing
+- Installs updates through the stock PackageInstaller; on Android 12+ installs skip the confirm dialog once unggun is the installer of record, including unggun updating itself
+- Optional delete-after-install to keep the APK cache clean
+- Respects GitHub rate limits: shows the retry time and stops early instead of hammering the API
+
+What it does not do (yet): background/scheduled update checks. Checks run when you tap. Untested means untested: silent-update behavior depends on the device's Android build and is verified on a Samsung A24, not across devices.
 
 ## Install
 
-Download `unggun-vX.Y.Z.apk` and its `.sha256` from the latest GitHub release, compare the SHA-256, then open the APK. The release notes list the signing certificate SHA-256 to check.
-
-Setup steps: [docs/SETUP.md](docs/SETUP.md).
-
-Research: [docs/NATIVE-RECODE-SPEC.md](docs/NATIVE-RECODE-SPEC.md) - a specification for a possible from-scratch native recode (draft for decision, nothing built).
-
-## Differences from upstream
-
-- Different package ID, so it installs next to Obtainium and does not update it.
-- Own app name, bonfire icon and version badge.
-- Self-updates track this repository.
-- Same `obtainium://` link scheme as upstream, so tapping such a link on a phone with both apps asks which app to open.
+Download `unggun-vX.Y.Z.apk` and its `.sha256` from the [latest release](https://github.com/irvan-putra/unggun/releases), compare the SHA-256, then open the APK. The release notes list the signing certificate SHA-256 to check. New versions install in place over old ones.
 
 ## Build
 
     git clone https://github.com/irvan-putra/unggun
-    cd unggun
-    flutter pub get
-    flutter build apk --flavor normal --debug
+    cd unggun/native
+    ./gradlew assembleDebug
 
-CI (`.github/workflows/ci.yml`) runs analysis and tests and builds a debug APK. The manual `release.yml` workflow builds the release APK, signs it with the repository's signing secrets (`UNGGUN_KEYSTORE_B64`, `UNGGUN_STORE_PASSWORD`, `UNGGUN_KEY_ALIAS`, `UNGGUN_KEY_PASSWORD`), verifies package and certificate, and publishes a GitHub pre-release.
+CI (`native-ci.yml`) compiles, runs unit tests and an emulator smoke test. The manual `native-release.yml` workflow builds the release APK, signs it with the repository's signing secrets, verifies package, version and certificate, and publishes a GitHub pre-release with a sha256 sidecar.
 
-Icons: `pip install pillow==12.3.0 && python3 tools/badge_icon.py X.Y.Z`.
+Launcher icon: `pip install pillow==12.3.0 && python3 native/tools/make_icons.py X.Y.Z` (single 192px full-color PNG with the version strip; no adaptive or monochrome layers).
 
 ## License
 
