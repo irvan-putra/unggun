@@ -17,7 +17,12 @@ Two notices appear in a row (a welcome notice and a note about Google's develope
 
 - **One app:** Add app, then paste the release page URL.
 - **Many apps:** Settings, Import/export, "Unggun import", and pick an Unggun or Obtainium export file. The file can be a bare JSON list of apps or an object with an `apps` list. See `test/fixtures/import-sample.json` for the shape.
+- **Many apps without a file:** Settings, Import/export, "Import from URL list", and paste one release URL per line. Apps added this way use the default settings, so turn on "Include prereleases" per app for projects that only publish pre-releases.
 - Importing overwrites entries with the same app ID inside Unggun and applies the settings in the file. Imported apps may show as "not installed" until they are installed or updated through Unggun (the app says this itself).
+
+## 3a. When a tracked repo moves
+
+If a tracked GitHub project is merged into another repository or deleted, its entry stops refreshing and shows an error. Unggun cannot follow that move by itself. Remove the entry, then add the app again with the current repository URL. The already-installed app is matched by its package ID, so nothing needs to be reinstalled. If you keep an old export file for re-setup, update the URLs in it first, or the same error comes back after the import.
 
 ## 4. Updates
 

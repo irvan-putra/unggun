@@ -14,8 +14,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p ci/apk
-          gh release download v0.1.3 --pattern '*.apk' --dir /tmp/old
-          gh release download v0.1.4 --pattern '*.apk' --dir /tmp/new
+          gh release download v0.1.4 --pattern '*.apk' --dir /tmp/old
+          gh release download v0.1.5 --pattern '*.apk' --dir /tmp/new
           cp /tmp/old/*.apk ci/apk/old.apk
           cp /tmp/new/*.apk ci/apk/new.apk
       - name: Enable KVM

@@ -1,11 +1,11 @@
-# Android launcher presentation correction
+# Android launcher presentation
 
-Prepared for the approved0.1.4/code5 test release. Publication requires final checks and signed workflow success.
+Prepared for the approved0.1.5/code6 test release. Publication requires final checks and signed workflow success.
 
-The launcher label is lowercase `unggun`. The bonfire artwork is unchanged. Legacy icons already used the family bottom strip, but the Android26+ adaptive foreground floated its version text without that strip. The generator now maps the same visible face into the centre72dp of Android's108dp adaptive layer. The visible strip starts at76%, the numbers sit at88%, and the font is DejaVu Sans Bold at11.5% of the visible face, matching the Tuju family generator. Themed icons have cut-out numerals so the strip stays readable. The TV banner name is lowercase too. Export folder naming is unchanged to avoid moving user data.
+The launcher label stays lowercase `unggun` and the bonfire artwork is unchanged. The version badge strip now reads0.1.5, regenerated with the pinned `tools/badge_icon.py X.Y.Z`; CI checks the resulting resources. Legacy, adaptive and themed icons come from the same generator, so the strip position and font match the Tuju family convention.
 
-Regenerate using the existing pinned `tools/badge_icon.py X.Y.Z`; CI checks the resulting resources. Legacy, adaptive circle/rounded-square and themed masks were compared with the actual Tuju resources. These renders are resource previews, not a phone launcher screenshot.
+This release changes no app behavior. It refreshes the setup guide (`docs/SETUP.md`): a new section covers what to do when a tracked GitHub project is merged, renamed or deleted, and the import section now documents adding several apps at once from a pasted URL list.
 
-An installable update needs a separately approved new version/code and same-signing-key release. The current0.1.3 APK is not changed by a source commit. No uninstall, data clearing, signing, rate-limit or background behavior change is part of this correction.
+An installable update needs a separately approved new version/code and same-signing-key release. No uninstall, data clearing, signing, rate-limit or background behavior change is part of this release.
 
 The exact DejaVu font file is vendored with its license in `tools/fonts/` and its SHA-256 is checked. This prevents runner distribution font differences from changing the badge.

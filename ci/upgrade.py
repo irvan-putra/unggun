@@ -9,6 +9,6 @@ adb('shell','am','force-stop',PKG)
 adb('shell','monkey','-p',PKG,'-c','android.intent.category.LAUNCHER','1');time.sleep(12)
 root=dump('upgrade-retained-ui');shot('upgrade-retained');names=' '.join(labels(root))if root is not None else ''
 for want in ['app-one','app-two']:assert want in names.lower(),(want,names)
-assert 'versionName=0.1.4' in adb('shell','dumpsys','package',PKG)
+assert 'versionName=0.1.5' in adb('shell','dumpsys','package',PKG)
 assert PKG not in adb('logcat','-d','-b','crash',check=False)
-print('PASS: signed0.1.3 to0.1.4 retained both synthetic imported records without uninstall/data clear')
+print('PASS: signed0.1.4 to0.1.5 retained both synthetic imported records without uninstall/data clear')
