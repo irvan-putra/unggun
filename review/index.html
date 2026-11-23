@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>unggun native-recode spec review - what to confirm before deciding</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0 auto; max-width: 44rem; padding: 1.5rem 1rem 6rem; line-height: 1.55; }
+  h1 { font-size: 1.6rem; margin-bottom: .2rem; }
+  h2 { font-size: 1.15rem; margin-top: 1.6rem; border-bottom: 1px solid #8884; padding-bottom: .25rem; }
+  h2 .dist { font-size: .8rem; font-weight: normal; opacity: .7; }
+  .sub { opacity: .75; margin-top: 0; }
+  a { color: #4a7ddb; }
+  #filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 1rem 0 .4rem; position: sticky; top: 0; background: Canvas; padding: .4rem 0; z-index: 30; }
+  #filters button { font: inherit; font-size: .85rem; padding: 5px 12px; border: 1px solid #8886; border-radius: 999px; background: Canvas; color: CanvasText; }
+  #filters button.on { background: #4a7ddb; border-color: #4a7ddb; color: #fff; }
+  .item { border: 1px solid #8884; border-radius: .75rem; padding: .8rem 1rem; margin: .8rem 0; }
+  .item h3 { margin: 0 0 .25rem; font-size: .98rem; }
+  .item p { margin: .3rem 0 .5rem; font-size: .9rem; opacity: .85; }
+  .item .states { display: flex; flex-wrap: wrap; gap: 6px; }
+  .item button { font: inherit; font-size: .85rem; padding: 5px 12px; border: 1px solid #8886; border-radius: 999px; background: Canvas; color: CanvasText; }
+  .item button.on { background: #2e9e50; border-color: #2e9e50; color: #fff; }
+  .item button.on.no { background: #c52d36; border-color: #c52d36; }
+  .item button.on.partly { background: #b87e1e; border-color: #b87e1e; }
+  .item input { font: inherit; font-size: .88rem; width: 100%; margin-top: .5rem; padding: 6px 9px; border: 1px solid #8886; border-radius: .5rem; background: Canvas; color: CanvasText; }
+  #review-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; font: 14px/1.4 system-ui, sans-serif; }
+  #review-bar .bar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; padding: 8px; background: Canvas; border-top: 1px solid #8885; }
+  #review-bar button { font: inherit; padding: 6px 12px; border: 1px solid #8886; border-radius: 999px; background: Canvas; color: CanvasText; }
+  #review-bar button.on { background: #4a7ddb; color: #fff; border-color: #4a7ddb; }
+  #review-panel { display: none; max-width: 44rem; margin: 8px auto 0; padding: 10px; background: Canvas; border: 1px solid #8885; border-radius: 8px; }
+  #review-panel.open { display: block; }
+  #review-panel pre { white-space: pre-wrap; max-height: 12rem; overflow: auto; margin: 6px 0; font-size: .85rem; }
+</style>
+</head>
+<body data-version="ff253310">
+<h1>unggun native-recode spec review</h1>
+<p class="sub"><a href="https://github.com/irvan-putra/unggun/blob/main/docs/NATIVE-RECODE-SPEC.md">Read the spec on GitHub</a> (commit ff253310). Go through the items below; for each, tap a status and add a note if useful. The last section is the 5 open questions - your note there is the decision. Then copy the review text and send it back.</p>
+
+<div id="filters" role="group" aria-label="Filter by section"></div>
+<div id="groups"></div>
+
+<div id="review-bar">
+ <div id="review-panel">
+  <div>Copy this and send it back:</div>
+  <pre id="review-text"></pre>
+  <button type="button" data-act="copy">Copy results</button>
+  <button type="button" data-act="close-panel">Close</button>
+ </div>
+ <div class="bar">
+  <button type="button" data-act="panel">Review text</button>
+  <button type="button" data-act="reset">Reset</button>
+  <span id="review-count"></span>
+ </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var GROUPS=[
+ {route:'continuity',title:'Continuity constraints (spec section 1)',items:[
+  {id:'same-signing-key',q:'Same signing key and package name are non-negotiable',d:'The native build must install over the Flutter build in place, keeping installer-of-record status for every maintained app. A new key forces uninstall and loses that.'},
+  {id:'migration-path',q:'Migration path: export JSON in the Flutter build, install native over it, import',d:'Labeled inferred in the spec; direct SharedPreferences read is possible but fragile across an engine swap. Export/import is the supported path.'},
+  {id:'export-contract',q:'The existing 0.1.x export format is the compatibility contract',d:'The native app must read exports produced by 0.1.x (app array with additionalSettings maps, optional settings section, plain-text URL list as input).'}
+ ]},
+ {route:'screens',title:'Screens (spec section 2)',items:[
+  {id:'screen-inventory',q:'The eleven-screen inventory and its scope description are accurate',d:'Home, app detail, add app, import/export, settings, logs, pinned-certs editor, pin-set editor, update health, per-app options. The generated-form settings system is the largest UI piece.'},
+  {id:'smaller-set-viable',q:'A smaller five-screen set (list, detail, add, import/export, settings) would still cover daily use',d:'This is the lever that shrinks the recode most; the open question at the end asks you to pick.'}
+ ]},
+ {route:'sources',title:'Sources (spec section 3)',items:[
+  {id:'source-coverage',q:'GitHub + DirectApkLink + HTML covers current usage',d:'Verified: the tracked set is GitHub-only today. Each extra source is its own parser to port and test.'},
+  {id:'source-contract',q:'The source contract description (host matching, extraction, pacing, toggles) is complete enough to build against',d:'If something you rely on is missing from the contract, note it here.'}
+ ]},
+ {route:'checking',title:'Update checking (spec section 4)',items:[
+  {id:'checking-accurate',q:'The foreground/background check behavior description matches what you see in daily use',d:'15-min periodic worker, 360-min default due interval, guards, retry caps, per-app failure stamping.'},
+  {id:'rate-limit-machinery',q:'The rate-limit machinery (0.1.3 + 0.1.6) is worth porting as-is',d:'Per-host gate, challenge/quota pauses, persisted blocks, budget spreading, one-off recheck queued at the reset time.'}
+ ]},
+ {route:'install',title:'Install flows (spec section 5)',items:[
+  {id:'install-flows',q:'The install flow description is complete: installer modes, downloads, filters, minimum age, install order',d:'Stock / root / Shizuku / external handoff; determinate progress with cancel; ABI and asset filters; supply-chain delay; Unggun installs itself last.'}
+ ]},
+ {route:'keepalive',title:'Keep-alive design (spec section 6)',items:[
+  {id:'mihon-design',q:'The Mihon-style foreground service is the right default shape for the native recode',d:'Worker calls setForeground with a dataSync ForegroundInfo; one cached ongoing notification, determinate bar, 500ms throttle, cancel action, canceled in finally.'}
+ ]},
+ {route:'data',title:'Data model and notifications (spec sections 7-8)',items:[
+  {id:'data-model',q:'The 22-field App record and settings description look right',d:'Export keeps the same JSON field names; internal storage is free (Room or DataStore + JSON).'},
+  {id:'notif-channels',q:'Reusing the nine notification channel IDs matters to you',d:'Same IDs keep your per-channel system settings (importance, sound) across the swap.'}
+ ]},
+ {route:'testing',title:'Testing strategy (spec section 9)',items:[
+  {id:'parsers-first',q:'Parsers-green-before-UI is the right build order',d:'Parser fixtures transfer verbatim as data; Kotlin parsers get pinned to identical behavior first, then providers and UI.'}
+ ]},
+ {route:'effort',title:'Effort sketch (spec section 11)',items:[
+  {id:'effort-estimate',q:'3-6 weeks focused work (reduced screen/source set, with tests) sounds right to you',d:'Longer for all 29 sources. The middle-path 0.1.8 glue ships independently and does not block this decision.'}
+ ]},
+ {route:'questions',title:'Open questions - your note is the decision (spec section 10)',items:[
+  {id:'q-screens',q:'Q1. Screen set: all eleven, or the smaller five-screen set?',d:'Write your pick in the note (e.g. "five screens, keep logs too").'},
+  {id:'q-sources',q:'Q2. Source set: GitHub + DirectApkLink + HTML only, or which others?',d:'Write your pick in the note.'},
+  {id:'q-installers',q:'Q3. Installer modes: keep root and Shizuku, or stock-only for v1?',d:'Your phone uses stock today.'},
+  {id:'q-upstream',q:'Q4. Upstream: freeze at Obtainium 1.7.4 semantics, or keep watching upstream and hand-port selected fixes?',d:'Freezing severs the merge path; watching costs ongoing effort.'},
+  {id:'q-locales',q:'Q5. Locales: English + Indonesian only, or convert all 35?',d:'Write your pick in the note.'}
+ ]}
+];
+var KEY='unggun-spec-review-v1';
+var state={};
+try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+var filter='all';
+try{filter=JSON.parse(localStorage.getItem(KEY+'-filter')||'"all"')}catch(e){filter='all'}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(KEY+'-filter',JSON.stringify(filter))}catch(e){}}
+function version(){return document.body.getAttribute('data-version')||'ff253310'}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function render(){
+ var f=document.getElementById('filters');f.innerHTML='';
+ var all=document.createElement('button');all.type='button';all.textContent='All sections';all.dataset.f='all';f.appendChild(all);
+ GROUPS.forEach(function(g){var b=document.createElement('button');b.type='button';b.textContent=g.route;b.dataset.f=g.route;b.title=g.title;f.appendChild(b)});
+ var host=document.getElementById('groups');host.innerHTML='';
+ GROUPS.forEach(function(g){
+  if(filter!=='all'&&filter!==g.route)return;
+  var h=document.createElement('h2');h.textContent=g.title;host.appendChild(h);
+  g.items.forEach(function(it){
+   var st=state[it.id]||{};
+   var d=document.createElement('div');d.className='item';d.dataset.id=it.id;
+   d.innerHTML='<h3>'+esc(it.q)+'</h3><p>'+esc(it.d)+'</p>'+
+    '<div class="states">'+
+    '<button type="button" data-s="agree">Agree</button>'+
+    '<button type="button" data-s="disagree">Disagree</button>'+
+    '<button type="button" data-s="partly">Partly / note</button>'+
+    '</div>'+
+    '<input type="text" placeholder="note (optional)" maxlength="200" value="'+esc(st.note||'')+'">';
+   host.appendChild(d);
+  });
+ });
+ refresh();
+}
+function refresh(){
+ document.querySelectorAll('#filters button').forEach(function(b){b.classList.toggle('on',b.dataset.f===filter)});
+ document.querySelectorAll('.item').forEach(function(d){
+  var st=state[d.dataset.id]||{};
+  d.querySelectorAll('button').forEach(function(b){
+   var on=st.status===b.dataset.s;
+   b.classList.toggle('on',on);
+   b.classList.toggle('no',on&&b.dataset.s==='disagree');
+   b.classList.toggle('partly',on&&b.dataset.s==='partly');
+  });
+ });
+ var n=Object.keys(state).filter(function(k){return state[k]&&(state[k].status||state[k].note)}).length;
+ var total=GROUPS.reduce(function(a,g){return a+g.items.length},0);
+ document.getElementById('review-count').textContent=n+' of '+total+' answered';
+ if(document.getElementById('review-panel').classList.contains('open'))document.getElementById('review-text').textContent=lines();
+}
+function lines(){
+ var L=['Unggun native-recode spec review (spec '+version()+')','One line per item; open questions answered in the note.'];
+ GROUPS.forEach(function(g){g.items.forEach(function(it){
+  var st=state[it.id];if(!st||(!st.status&&!st.note))return;
+  var s='- ['+it.id+'] '+it.q+': '+(st.status?st.status.toUpperCase():'(no status)');
+  if(st.note)s+=' - "'+st.note.replace(/"/g,"'")+'"';
+  L.push(s);
+ })});
+ if(L.length===2)L.push('(nothing answered yet)');
+ return L.join('\n');
+}
+function flash(t){var s=document.getElementById('review-count');s.textContent=t;setTimeout(refresh,1500)}
+function copyText(){var t=lines();
+ function fail(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');flash('Copied')}catch(e){flash('Select and copy the text above')}document.body.removeChild(ta)}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){flash('Copied')},fail)}else fail()}
+document.getElementById('filters').addEventListener('click',function(e){
+ var b=e.target&&e.target.closest?e.target.closest('button[data-f]'):null;if(!b)return;
+ filter=b.dataset.f;save();render();
+});
+document.getElementById('groups').addEventListener('click',function(e){
+ var b=e.target&&e.target.closest?e.target.closest('button[data-s]'):null;if(!b)return;
+ var id=b.closest('.item').dataset.id;var st=state[id]||{};
+ if(st.status===b.dataset.s){delete st.status}else{st.status=b.dataset.s}
+ state[id]=st;save();refresh();
+});
+document.getElementById('groups').addEventListener('input',function(e){
+ var inp=e.target&&e.target.closest?e.target.closest('.item input'):null;if(!inp)return;
+ var id=inp.closest('.item').dataset.id;var st=state[id]||{};st.note=inp.value;state[id]=st;save();
+});
+document.getElementById('review-bar').addEventListener('click',function(e){
+ var b=e.target&&e.target.closest?e.target.closest('button[data-act]'):null;if(!b)return;
+ var act=b.dataset.act;
+ if(act==='panel'){document.getElementById('review-panel').classList.add('open');document.getElementById('review-text').textContent=lines()}
+ else if(act==='close-panel'){document.getElementById('review-panel').classList.remove('open')}
+ else if(act==='copy'){copyText()}
+ else if(act==='reset'){state={};save();document.querySelectorAll('.item input').forEach(function(i){i.value=''});refresh()}
+});
+render();
+})();
+</script>
+</body>
+</html>
