@@ -67,14 +67,14 @@ jobs:
           grep -q "package: name='com.vanipy.unggun'" /tmp/badging.txt
           grep -q "versionName='${VER}'" /tmp/badging.txt
           cp "$APK" "unggun-v${VER}.apk"
-          sha256sum "unggun-v${VER}.apk" | tee "unggun-v${VER}.apk.sha256"
+          sha256sum "unggun-v${VER}.apk"   # logged; no sidecar asset - GitHub's digest is the checksum
       - name: Publish pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VER="${{ steps.v.outputs.version }}"
           cat > notes.md <<NOTES
-          unggun ${VER}: experimental fork of Obtainium 1.7.4 with its own package ID (com.vanipy.unggun) and bonfire icon. Installs next to Obtainium. This update keeps background update checks alive with a real foreground service: while a batch runs (including the automatic rechecks queued after a rate limit), a dataSync foreground service owns the ongoing progress notification and Android treats the check as user-visible work, so it is not killed mid-batch when you leave the app or the screen turns off. The pattern is Mihon's library update; when Android refuses the service start (background-start restrictions on Android 12+), the check falls back to the 0.1.7 notification-only behavior. The launcher icon badge now reads ${VER}. Install over the existing unggun app, do not uninstall or clear storage. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is in the attached .sha256 file. See NOTICE.md for changes from upstream.
+          unggun ${VER}: experimental fork of Obtainium 1.7.4 with its own package ID (com.vanipy.unggun) and bonfire icon. Installs next to Obtainium. This update keeps background update checks alive with a real foreground service: while a batch runs (including the automatic rechecks queued after a rate limit), a dataSync foreground service owns the ongoing progress notification and Android treats the check as user-visible work, so it is not killed mid-batch when you leave the app or the screen turns off. The pattern is Mihon's library update; when Android refuses the service start (background-start restrictions on Android 12+), the check falls back to the 0.1.7 notification-only behavior. The launcher icon badge now reads ${VER}. Install over the existing unggun app, do not uninstall or clear storage. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is GitHub's asset digest on the release. See NOTICE.md for changes from upstream.
           NOTES
-          gh release create "v${VER}" "unggun-v${VER}.apk" "unggun-v${VER}.apk.sha256" \
+          gh release create "v${VER}" "unggun-v${VER}.apk" \
             --title "unggun ${VER}" --notes-file notes.md --prerelease --target "${GITHUB_SHA}"

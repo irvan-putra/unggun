@@ -22,7 +22,7 @@ What it does not do (yet): background/scheduled update checks. Checks run when y
 
 ## Install
 
-Download `unggun-vX.Y.Z.apk` and its `.sha256` from the [latest release](https://github.com/irvan-putra/unggun/releases), compare the SHA-256, then open the APK. The release notes list the signing certificate SHA-256 to check. New versions install in place over old ones.
+Download `unggun-vX.Y.Z.apk` from the [latest release](https://github.com/irvan-putra/unggun/releases) and check it against GitHub's SHA-256 digest for the asset (shown by `gh release view` / the API), then open the APK. The release notes list the signing certificate SHA-256 to check. New versions install in place over old ones.
 
 ## Build
 
@@ -30,7 +30,7 @@ Download `unggun-vX.Y.Z.apk` and its `.sha256` from the [latest release](https:/
     cd unggun/native
     ./gradlew assembleDebug
 
-CI (`native-ci.yml`) compiles, runs unit tests and an emulator smoke test. The manual `native-release.yml` workflow builds the release APK, signs it with the repository's signing secrets, verifies package, version and certificate, and publishes a GitHub pre-release with a sha256 sidecar.
+CI (`native-ci.yml`) compiles, runs unit tests and an emulator smoke test. The manual `native-release.yml` workflow builds the release APK, signs it with the repository's signing secrets, verifies package, version and certificate, and publishes a GitHub pre-release (checksum: GitHub's asset digest).
 
 Launcher icon: `pip install pillow==12.3.0 && python3 native/tools/make_icons.py X.Y.Z` (single 192px full-color PNG with the version strip; no adaptive or monochrome layers).
 

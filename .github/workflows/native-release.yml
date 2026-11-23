@@ -2,8 +2,9 @@ name: unggun native signed release
 
 # Manual only. Builds the native release APK, signs it with the unggun key from
 # repository secrets, verifies package, version and certificate, then publishes a
-# GitHub pre-release with a sha256 sidecar. Same key and conventions as the
-# Flutter release workflow (release.yml).
+# GitHub pre-release. No checksum sidecar: GitHub's per-asset digest is the
+# trusted checksum (family decision 2026-11-23). Same key and conventions as
+# the Flutter release workflow (release.yml).
 on:
   workflow_dispatch:
 
@@ -62,14 +63,14 @@ jobs:
           grep -q "package: name='com.vanipy.unggun'" /tmp/badging.txt
           grep -q "versionName='${VER}'" /tmp/badging.txt
           cp "$APK" "unggun-v${VER}.apk"
-          sha256sum "unggun-v${VER}.apk" | tee "unggun-v${VER}.apk.sha256"
+          sha256sum "unggun-v${VER}.apk"   # logged; no sidecar asset - GitHub's digest is the checksum
       - name: Publish pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VER="${{ steps.v.outputs.version }}"
           cat > notes.md <<NOTES
-          unggun ${VER}: native (Kotlin) recode of the GitHub-only updater, per docs/NATIVE-RECODE-SPEC.md revision 2. Scope: GitHub source, stock Android installer, English, manual checks with 4-way parallelism and rate-limit persistence, ABI/name APK choice, track-only, logs screen, notifications for updates/downloads/installs/errors. Installs over the Flutter build (same package and signing key); after a fresh install the first update of each app may need one tap until this build is its installer of record. Known-unproven on real devices: silent-update behavior and background survival on Samsung - those need phone confirmation. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is in the attached .sha256 file.
+          unggun ${VER}: native (Kotlin) recode of the GitHub-only updater, per docs/NATIVE-RECODE-SPEC.md revision 2. Scope: GitHub source, stock Android installer, English, manual checks with 4-way parallelism and rate-limit persistence, ABI/name APK choice, track-only, logs screen, notifications for updates/downloads/installs/errors. Installs over the Flutter build (same package and signing key); after a fresh install the first update of each app may need one tap until this build is its installer of record. Known-unproven on real devices: silent-update behavior and background survival on Samsung - those need phone confirmation. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is GitHub's asset digest on the release.
           NOTES
-          gh release create "v${VER}" "unggun-v${VER}.apk" "unggun-v${VER}.apk.sha256" \
+          gh release create "v${VER}" "unggun-v${VER}.apk" \
             --title "unggun ${VER} (native)" --notes-file notes.md --prerelease --target "${GITHUB_SHA}"
