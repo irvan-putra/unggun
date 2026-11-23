@@ -618,6 +618,10 @@
         "one": "Muchas peticiones (limitado); pruebe de nuevo en {} minuto",
         "other": "Muchas peticiones (limitado); pruebe de nuevo en {} minutos"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Solo para seguimiento",
     "trackOnlyAppDescription": "Se hará el seguimiento de actualizaciones para la aplicación, pero Obtainium no será capaz de descargar o actualizarla.",
     "trackOnlyInBrackets": "(Solo para seguimiento)",

@@ -107,10 +107,19 @@ class HTTPStatusError extends ObtainiumError {
 
 class RateLimitError extends ObtainiumError {
   final int remainingMinutes;
-  RateLimitError(this.remainingMinutes)
+
+  /// True when a recheck has been queued to run by itself once the source's
+  /// rate-limit window resets, so the message can say "will retry" rather
+  /// than asking the user to come back.
+  final bool autoRetryScheduled;
+
+  RateLimitError(this.remainingMinutes, {this.autoRetryScheduled = false})
     : super.withCode(
         'RATE_LIMIT',
-        data: {'remainingMinutes': remainingMinutes},
+        data: {
+          'remainingMinutes': remainingMinutes,
+          'autoRetryScheduled': autoRetryScheduled,
+        },
       );
 }
 
@@ -308,10 +317,15 @@ String localizeErrorCode(String code, Map<String, dynamic>? data) {
       data?['note'] != null && (data!['note'] as String).isNotEmpty
           ? '${tr('noReleaseFound')}\n\n${data['note']}'
           : tr('noReleaseFound'),
-    'RATE_LIMIT' => plural(
-      'tooManyRequestsTryAgainInMinutes',
-      data?['remainingMinutes'] ?? 0,
-    ),
+    'RATE_LIMIT' => data?['autoRetryScheduled'] == true
+        ? plural(
+            'tooManyRequestsAutoRetryInMinutes',
+            data?['remainingMinutes'] ?? 0,
+          )
+        : plural(
+            'tooManyRequestsTryAgainInMinutes',
+            data?['remainingMinutes'] ?? 0,
+          ),
     'INVALID_URL' => tr(
       'invalidURLForSource',
       args: [data?['sourceName'] ?? ''],

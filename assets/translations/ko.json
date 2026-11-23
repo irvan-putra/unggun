@@ -618,6 +618,10 @@
         "one": "요청이 너무 많습니다 (속도 제한) - {}분 후에 다시 시도하세요",
         "other": "요청이 너무 많습니다 (속도 제한) - {}분 후에 다시 시도하세요"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "추적 전용",
     "trackOnlyAppDescription": "앱은 업데이트를 위해 추적되지만 Obtainium은 다운로드하거나 설치할 수 없습니다.",
     "trackOnlyInBrackets": "(추적 전용)",

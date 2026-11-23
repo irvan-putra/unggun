@@ -618,6 +618,10 @@
         "one": "Túl sok kérés (lekérdezés-korlátozás); próbálja újra {} perc múlva,\nvagy adjon meg egy GitHub/GitLab API-kulcsot",
         "other": "Túl sok kérés (lekérdezés-korlátozás); próbálja újra {} perc múlva,\nvagy adjon meg egy GitHub/GitLab API-kulcsot"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Csak nyomon követés",
     "trackOnlyAppDescription": "Az Obtainium nyomon követi az alkalmazás-frissítéseket, de nem tudja letölteni vagy telepíteni.",
     "trackOnlyInBrackets": "(Csak nyomon követés)",

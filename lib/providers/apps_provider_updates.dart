@@ -229,6 +229,10 @@ extension AppsProviderUpdates on AppsProvider {
       // background task doesn't retry them every 15 minutes; they become due
       // again after one full update interval (#3187).
       final List<App> failedApps = [];
+      // Apps that hit a source rate limit: queued for an automatic recheck
+      // once the limit window resets instead of being left for a manual
+      // refresh.
+      final List<MapEntry<String, RateLimitError>> rateLimited = [];
       var lastSaveTime = DateTime.now();
       const saveInterval = Duration(seconds: 3);
 
@@ -255,7 +259,9 @@ extension AppsProviderUpdates on AppsProvider {
               throwErrorsForRetry) {
             rethrow;
           }
-          if (e is RepositoryRenamedError) {
+          if (e is RateLimitError) {
+            rateLimited.add(MapEntry(appId, e));
+          } else if (e is RepositoryRenamedError) {
             await updatePendingRepoRename(appId, e.newUrl);
           } else {
             errors.add(appId, e, appName: apps[appId]?.name);
@@ -302,6 +308,45 @@ extension AppsProviderUpdates on AppsProvider {
         List.generate(min(maxConcurrent, appIds.length), (_) => worker()),
         eagerError: true,
       );
+      if (rateLimited.isNotEmpty) {
+        var retrySeconds = 0;
+        for (final entry in rateLimited) {
+          final secs = entry.value.remainingMinutes * 60;
+          if (secs > retrySeconds) retrySeconds = secs;
+        }
+        var retryScheduled = false;
+        try {
+          retryScheduled = await scheduleRateLimitedRecheck(
+            'fg',
+            rateLimited.map((entry) => MapEntry(entry.key, 1)).toList(),
+            retrySeconds,
+            settingsProvider,
+          );
+        } catch (schedErr) {
+          AppLogger.error(
+            schedErr,
+            message: 'Failed to queue rate-limited recheck',
+          );
+        }
+        for (final entry in rateLimited) {
+          final err = retryScheduled
+              ? RateLimitError(
+                  entry.value.remainingMinutes,
+                  autoRetryScheduled: true,
+                )
+              : entry.value;
+          errors.add(entry.key, err, appName: apps[entry.key]?.name);
+          final app = apps[entry.key]?.app;
+          if (app != null) {
+            failedApps.add(
+              app.copyWith(
+                lastUpdateCheck: DateTime.now(),
+                consecutiveFailedChecks: app.consecutiveFailedChecks,
+              ),
+            );
+          }
+        }
+      }
       if (fetched.isNotEmpty) {
         await saveApps(fetched, reuseInstalledInfo: true);
       }

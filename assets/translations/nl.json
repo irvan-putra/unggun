@@ -618,6 +618,10 @@
         "one": "Te veel verzoeken (aantal beperkt) - opnieuw proberen over {} minuut",
         "other": "Te veel verzoeken (aantal beperkt) - opnieuw proberen over {} minuten"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "'Alleen volgen'",
     "trackOnlyAppDescription": "De app zal worden gevolgd voor updates, maar Obtainium zal niet in staat zijn om deze te installeren.",
     "trackOnlyInBrackets": "(Alleen volgen)",

@@ -618,6 +618,10 @@
         "one": "Massa peticions (límit excedit), torna-hi en {} minut",
         "other": "Massa peticions (límit excedit), torna-hi en {} minuts"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Només per a seguiment",
     "trackOnlyAppDescription": "Farem el seguiment de les actualitzacions per a l'aplicació, però Obtainium no podrà descarregar-la ni actualitzar-la.",
     "trackOnlyInBrackets": "(només per a seguiment)",

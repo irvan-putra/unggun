@@ -618,6 +618,10 @@
         "one": "অতিরিক্ত অনুরোধ (অনুরোধের সীমা অতিক্রম) - {} মিনিট পর আবার চেষ্টা করুন",
         "other": "অতিরিক্ত অনুরোধ (অনুরোধের সীমা অতিক্রম) - {} মিনিট পর আবার চেষ্টা করুন"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "ট্র্যাক-অনলি",
     "trackOnlyAppDescription": "অ্যাপটির আপডেটের খোঁজ রাখা হবে, কিন্তু Obtainium এটি ডাউনলোড বা ইনস্টল করতে পারবে না।",
     "trackOnlyInBrackets": "(ট্র্যাক-অনলি)",

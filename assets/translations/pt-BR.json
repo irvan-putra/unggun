@@ -618,6 +618,10 @@
         "one": "Muitas solicitações (limitado) - tente novamente em {} minuto",
         "other": "Muitas solicitações (limitado) - tente novamente em {} minutos"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Somente rastreamento",
     "trackOnlyAppDescription": "As atualizações do app serão rastreadas, mas o Obtainium não baixará ou instalará elas.",
     "trackOnlyInBrackets": "(somente rastreamento)",

@@ -618,6 +618,10 @@
         "one": "طلبات كثيرة جدًا (حُدد المعدل) - حاول مرة أخرى بعد {} دقيقة",
         "other": "طلبات كثيرة جدًا (حُدد المعدل) - حاول مرة أخرى بعد {} دقائق"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "للتعقب فقط",
     "trackOnlyAppDescription": "سيتم تعقب التطبيق للتحديثات، لكن Obtainium لن يتمكن من تنزيله أو تثبيته.",
     "trackOnlyInBrackets": "(للتعقب فقط)",

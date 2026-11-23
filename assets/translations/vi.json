@@ -618,6 +618,10 @@
         "one": "Quá nhiều yêu cầu (tốc độ giới hạn) - hãy thử lại sau {} phút",
         "other": "Quá nhiều yêu cầu (tốc độ giới hạn) - hãy thử lại sau {} phút"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Chỉ theo dõi",
     "trackOnlyAppDescription": "Ứng dụng sẽ được theo dõi để cập nhật, nhưng Obtainium sẽ không thể tải xuống hoặc cài đặt nó.",
     "trackOnlyInBrackets": "(Chỉ theo dõi)",

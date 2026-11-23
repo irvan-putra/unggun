@@ -1235,6 +1235,42 @@ Future<void> bgUpdateCheck(
   AppsProvider._eventsController.add(null);
 }
 
+/// Queues a one-off background recheck for rate-limited apps so they are
+/// retried by themselves once the source's rate-limit window resets, instead
+/// of waiting for the user to refresh manually. Returns true when a retry
+/// task was registered; false off Android (the Workmanager plugin only
+/// exists there) or when there is nothing to retry.
+Future<bool> scheduleRateLimitedRecheck(
+  String taskIdPrefix,
+  List<MapEntry<String, int>> toRetry,
+  int retryAfterXSeconds,
+  SettingsProvider settingsProvider,
+) async {
+  if (toRetry.isEmpty || !Platform.isAndroid) return false;
+  final retryName = 'retry_${taskIdPrefix}_${Random().nextInt(10000)}';
+  await Workmanager().registerOneOffTask(
+    retryName,
+    retryName,
+    initialDelay: Duration(seconds: retryAfterXSeconds),
+    constraints: Constraints(
+      networkType: settingsProvider.bgGuardOnWiFi == BgGuardMode.nothing
+          ? NetworkType.unmetered
+          : NetworkType.connected,
+      requiresCharging:
+          settingsProvider.bgGuardWhileCharging == BgGuardMode.nothing,
+      requiresBatteryNotLow: false,
+      requiresDeviceIdle: false,
+      requiresStorageNotLow: false,
+    ),
+    inputData: {
+      'toCheck': toRetry
+          .map((entry) => {'key': entry.key, 'value': entry.value})
+          .toList(),
+    },
+  );
+  return true;
+}
+
 Future<
   ({List<App> updates, MultiAppMultiError? errors, MultiAppMultiError toThrow})
 >
@@ -1308,28 +1344,11 @@ _bgRunUpdateCheck(
       'BG update task $taskId: Scheduling retry in ${retryAfterXSeconds}s '
       '(${toRetry.length} to retry).',
     );
-    final retryName = 'retry_${taskId}_${Random().nextInt(10000)}';
-    await Workmanager().registerOneOffTask(
-      retryName,
-      retryName,
-      initialDelay: Duration(seconds: retryAfterXSeconds),
-      constraints: Constraints(
-        networkType:
-            appsProvider.settingsProvider.bgGuardOnWiFi == BgGuardMode.nothing
-            ? NetworkType.unmetered
-            : NetworkType.connected,
-        requiresCharging:
-            appsProvider.settingsProvider.bgGuardWhileCharging ==
-            BgGuardMode.nothing,
-        requiresBatteryNotLow: false,
-        requiresDeviceIdle: false,
-        requiresStorageNotLow: false,
-      ),
-      inputData: {
-        'toCheck': toRetry
-            .map((entry) => {'key': entry.key, 'value': entry.value})
-            .toList(),
-      },
+    await scheduleRateLimitedRecheck(
+      taskId,
+      toRetry,
+      retryAfterXSeconds,
+      appsProvider.settingsProvider,
     );
   } else {
     AppLogger.info('BG update task: No retries needed.');

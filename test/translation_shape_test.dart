@@ -46,6 +46,25 @@ void main() {
     }
   });
 
+  test('rate-limit wording distinguishes a queued automatic retry', () {
+    Localization.load(
+      const Locale('en'),
+      translations: Translations(_locale('en')),
+    );
+    final manual = localizeErrorCode('RATE_LIMIT', {
+      'remainingMinutes': 58,
+      'autoRetryScheduled': false,
+    });
+    final queued = localizeErrorCode('RATE_LIMIT', {
+      'remainingMinutes': 58,
+      'autoRetryScheduled': true,
+    });
+    expect(manual, contains('try again in 58 minutes'));
+    expect(queued, contains('retrying automatically in 58 minutes'));
+    expect(queued, isNot(contains('{}')));
+    expect(manual, isNot(queued));
+  });
+
   test('the aggregated error cap resolves in a locale with plural forms', () {
     Localization.load(
       const Locale('de'),

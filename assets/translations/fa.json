@@ -618,6 +618,10 @@
         "one": "درخواست‌های بسیار زیاد (نرخ محدود) - {} دقیقه دیگر دوباره امتحان کنید",
         "other": "درخواست‌های بسیار زیاد (نرخ محدود) - بعد از {} دقیقه دوباره امتحان کنید"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "فقط ردیابی",
     "trackOnlyAppDescription": "برنامه برای به روز رسانی ها ردیابی می شود، اما Obtainium قادر به دانلود یا نصب آن نخواهد بود.",
     "trackOnlyInBrackets": "«فقط ردیابی»",

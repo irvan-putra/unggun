@@ -618,6 +618,10 @@
         "one": "请求过于频繁（API 速率限制）- 请在 {} 分钟后重试",
         "other": "请求过于频繁（API 速率限制）- 请在 {} 分钟后重试"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "仅追踪",
     "trackOnlyAppDescription": "该应用的更新会被追踪，但 Obtainium 无法下载或安装它。",
     "trackOnlyInBrackets": "（仅追踪）",

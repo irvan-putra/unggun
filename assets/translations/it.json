@@ -618,6 +618,10 @@
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Solo-Monitoraggio",
     "trackOnlyAppDescription": "L'app sarà monitorata per gli aggiornamenti, ma Obtainium non sarà in grado di scaricarli o di installarli.",
     "trackOnlyInBrackets": "(Solo-Monitoraggio)",

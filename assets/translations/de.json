@@ -618,6 +618,10 @@
         "one": "Zu viele Anfragen (Rate begrenzt) – versuche es in {} Minute erneut",
         "other": "Zu viele Anfragen (Rate begrenzt) – versuche es in {} Minuten erneut"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Nur nachverfolgen",
     "trackOnlyAppDescription": "Die App wird auf neue verfügbare Versionen überwacht, aber Obtainium wird sie nicht herunterladen oder installieren.",
     "trackOnlyInBrackets": "(Nur nachverfolgen)",

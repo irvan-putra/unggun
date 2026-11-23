@@ -618,6 +618,10 @@
         "one": "Çok fazla istek (sınırlandı) - {} dakika sonra tekrar deneyin",
         "other": "Çok fazla istek (sınırlandı) - {} dakika sonra tekrar deneyin"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Sadece takip et",
     "trackOnlyAppDescription": "Uygulama güncellemeler için takip edilecektir ancak Obtainium tarafından indirilemez veya yüklenemez.",
     "trackOnlyInBrackets": "(sadece takip edilir)",

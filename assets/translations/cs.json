@@ -626,6 +626,10 @@
         "few": "Příliš mnoho požadavků (limit požadavků) - zkuste to znovu za {} minuty",
         "other": "Příliš mnoho požadavků (limit požadavků) - zkuste to znovu za {} minut"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Pouze sledovat",
     "trackOnlyAppDescription": "Aplikace bude sledována kvůli aktualizacím, ale Obtainium ji nebude stahovat ani instalovat.",
     "trackOnlyInBrackets": "(pouze sledování)",

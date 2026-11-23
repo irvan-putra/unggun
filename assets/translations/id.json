@@ -618,6 +618,10 @@
         "one": "Terlalu banyak permintaan (tarif dibatasi) - coba lagi dalam {} menit",
         "other": "Terlalu banyak permintaan (tarif dibatasi) - coba lagi dalam {} menit"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Terlalu banyak permintaan (tarif dibatasi) - antre, mencoba ulang otomatis dalam {} menit",
+        "other": "Terlalu banyak permintaan (tarif dibatasi) - antre, mencoba ulang otomatis dalam {} menit"
+    },
     "trackOnly": "Pelacakan Saja",
     "trackOnlyAppDescription": "Aplikasi akan dilacak untuk pembaruan, tetapi Obtainium tidak akan dapat mengunduh atau memasangnya.",
     "trackOnlyInBrackets": "(Pelacakan Saja)",

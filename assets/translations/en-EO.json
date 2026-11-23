@@ -618,6 +618,10 @@
         "one": "Tro da informmendoj (limigita kvanto) - reprovu en {} minuto",
         "other": "Tro da informmendoj (limigita kvanto) - reprovu en {} minutoj"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Nur sekvita",
     "trackOnlyAppDescription": "La apo estas sekvota por ĝisdatigoj, sed Obtainium ne povos elŝuti aŭ instali ĝin.",
     "trackOnlyInBrackets": "(Nur sekvita)",

@@ -618,6 +618,10 @@
         "one": "Previše zahtjeva (ograničen broj zahteva) - pokušajte ponovo za {} minutu",
         "other": "Previše zahtjeva (ograničena cijena) - pokušajte ponovo za {} min."
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Samo za praćenje",
     "trackOnlyAppDescription": "Aplikacija će se pratiti radi ažuriranja, ali Obtainium neće moći da je preuzme ili instalira.",
     "trackOnlyInBrackets": "(Samo za praćenje)",

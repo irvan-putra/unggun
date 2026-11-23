@@ -618,6 +618,10 @@
         "one": "For mange anmodninger (begrænset hastighed). Prøv igen om {} minut",
         "other": "For mange anmodninger (begrænset hastighed). Prøv igen om {} minutter"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Følg Kun",
     "trackOnlyAppDescription": "Appen tjekkes for opdateringer, men Obtainium kan ikke hente eller installere den.",
     "trackOnlyInBrackets": "(Følg Kun)",

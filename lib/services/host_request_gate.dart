@@ -7,7 +7,12 @@ import 'dart:math';
 import 'package:obtainium/custom_errors.dart';
 
 class HostRequestGate {
-  HostRequestGate({DateTime Function()? now}) : _now = now ?? DateTime.now;
+  HostRequestGate({
+    DateTime Function()? now,
+    this.baseRequestInterval = Duration.zero,
+    this.maxPaceInterval = const Duration(seconds: 10),
+    this.paceWhenRemainingAtOrBelow = 15,
+  }) : _now = now ?? DateTime.now;
 
   static final HostRequestGate instance = HostRequestGate();
 
@@ -15,8 +20,23 @@ class HostRequestGate {
   static const Duration defaultRateLimitBlockDuration = Duration(seconds: 60);
 
   final DateTime Function() _now;
+
+  /// Minimum spacing between request starts for the same request class.
+  /// Zero by default: check-level concurrency bounds the burst, and spacing
+  /// only matters once the host reports its quota running low.
+  final Duration baseRequestInterval;
+
+  /// Upper bound for adaptive pacing when the remaining quota is low.
+  final Duration maxPaceInterval;
+
+  /// Adaptive pacing kicks in once the host reports this many requests or
+  /// fewer left in the current quota window.
+  final int paceWhenRemainingAtOrBelow;
+
   final Map<String, _HostState> _hosts = {};
   final Map<String, DateTime> _blockedUntil = {};
+  final Map<String, _Quota> _quota = {};
+  final Map<String, DateTime> _lastStart = {};
 
   _HostState _state(String host) => _hosts.putIfAbsent(host, _HostState.new);
 
@@ -34,18 +54,62 @@ class HostRequestGate {
   /// Runs [action] honoring [host]'s concurrency limit. [blockKey] identifies
   /// the request class (e.g. api/feed/html) so a challenge on one class does
   /// not suppress the others. Throws [RateLimitError] without invoking
-  /// [action] while the class is blocked.
+  /// [action] while the class is blocked. Otherwise waits out any pacing delay
+  /// owed to the class before starting the request.
   Future<T> run<T>(
     String host,
     String blockKey,
     int maxConcurrent,
     Future<T> Function() action,
-  ) {
+  ) async {
     final remainingMinutes = _remainingBlockMinutes(blockKey);
     if (remainingMinutes != null) {
       throw RateLimitError(remainingMinutes);
     }
-    return _state(host).run(maxConcurrent, action);
+    return _state(host).run(maxConcurrent, () async {
+      await _pace(blockKey);
+      return action();
+    });
+  }
+
+  /// Spacing owed before the next request of class [blockKey] may start: the
+  /// base stagger, widened adaptively once the host reports its quota running
+  /// low so the remaining requests are spread across the rest of the window.
+  Duration paceInterval(String blockKey, {DateTime? now}) {
+    final at = now ?? _now();
+    var interval = baseRequestInterval;
+    final quota = _quota[blockKey];
+    if (quota != null &&
+        quota.remaining > 0 &&
+        quota.remaining <= paceWhenRemainingAtOrBelow) {
+      final secondsLeft = quota.resetAt.difference(at).inSeconds;
+      if (secondsLeft > 0) {
+        final spread = Duration(
+          milliseconds: (secondsLeft * 1000 / quota.remaining).round(),
+        );
+        if (spread > interval) {
+          interval = spread > maxPaceInterval ? maxPaceInterval : spread;
+        }
+      }
+    }
+    return interval;
+  }
+
+  Future<void> _pace(String blockKey) async {
+    // Reserve a start slot synchronously (no await between read and write) so
+    // concurrent callers chain their slots instead of sharing one.
+    final now = _now();
+    final last = _lastStart[blockKey];
+    var start = now;
+    if (last != null) {
+      final earliest = last.add(paceInterval(blockKey, now: last));
+      if (earliest.isAfter(start)) start = earliest;
+    }
+    _lastStart[blockKey] = start;
+    final wait = start.difference(now);
+    if (wait.inMilliseconds > 0) {
+      await Future.delayed(wait);
+    }
   }
 
   /// Records a completed response and blocks that request class when it
@@ -56,6 +120,7 @@ class HostRequestGate {
     Map<String, String> headers, {
     String? body,
   }) {
+    _recordQuota(blockKey, headers);
     final reset = _githubQuotaReset(headers);
     if (reset != null) {
       _blockUntil(blockKey, reset);
@@ -91,6 +156,21 @@ class HostRequestGate {
       statusCode == 403 &&
       (int.tryParse(headers['retry-after']?.trim() ?? '') ?? 0) > 0;
 
+  /// Remembers the host's own accounting (x-ratelimit-remaining /
+  /// x-ratelimit-reset, sent on every GitHub API response) so [paceInterval]
+  /// can spread the remaining budget instead of spending it in one burst.
+  void _recordQuota(String blockKey, Map<String, String> headers) {
+    final remaining = int.tryParse(
+      headers['x-ratelimit-remaining']?.trim() ?? '',
+    );
+    final epoch = int.tryParse(headers['x-ratelimit-reset']?.trim() ?? '');
+    if (remaining == null || epoch == null) return;
+    _quota[blockKey] = _Quota(
+      remaining,
+      DateTime.fromMillisecondsSinceEpoch(epoch * 1000, isUtc: true),
+    );
+  }
+
   /// GitHub reports an exhausted quota with x-ratelimit-remaining 0 and the
   /// reset time in x-ratelimit-reset (epoch seconds), on any status.
   DateTime? _githubQuotaReset(Map<String, String> headers) {
@@ -125,6 +205,12 @@ class HostRequestGate {
       _blockedUntil[blockKey] = until;
     }
   }
+}
+
+class _Quota {
+  _Quota(this.remaining, this.resetAt);
+  final int remaining;
+  final DateTime resetAt;
 }
 
 class _HostState {

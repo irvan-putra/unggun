@@ -631,6 +631,10 @@
         "few": "Слишком много запросов (ограничение скорости) — попробуйте снова через {} минуты",
         "other": "Слишком много запросов (ограничение скорости) — попробуйте снова через {} минут"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Только отслеживать",
     "trackOnlyAppDescription": "Приложение будет отслеживаться на предмет обновлений, но Obtainium не сможет загрузить или установить его",
     "trackOnlyInBrackets": "(только отслеживание)",

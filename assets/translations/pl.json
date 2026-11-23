@@ -640,6 +640,10 @@
         "many": "Zbyt wiele żądań (limit API) - spróbuj ponownie za {} minut",
         "other": "Zbyt wiele żądań (limit API) - spróbuj ponownie za {} minut"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Tylko do obserwacji",
     "trackOnlyAppDescription": "Obtainium będzie sprawdzać dostępność aktualizacji, ale nie będzie w stanie pobrać ani zainstalować tej aplikacji.",
     "trackOnlyInBrackets": "(tylko obserwacja)",

@@ -618,6 +618,10 @@
         "one": "Забагато запитів (обмеження швидкості) - повторіть спробу через {} хвилину",
         "other": "Забагато запитів (обмеження швидкості) - повторіть спробу через {} хвилин"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Тільки відстеження",
     "trackOnlyAppDescription": "Застосунок буде відстежуватися для оновлень, але Obtainium не зможе його завантажити або встановити.",
     "trackOnlyInBrackets": "(Тільки для відстеження)",

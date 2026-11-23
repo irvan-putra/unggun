@@ -618,6 +618,10 @@
         "one": "リクエストが多すぎます（レート制限）- {} 分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {} 分後に再試行してください"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "追跡のみ",
     "trackOnlyAppDescription": "アプリのアップデートは追跡されますが、Obtainiumではアプリをダウンロードしたりインストールしたりできません。",
     "trackOnlyInBrackets": "(追跡のみ)",

@@ -618,6 +618,10 @@
         "one": "För många förfrågningar (begränsat pris) - försök igen om {} minut",
         "other": "För många förfrågningar (begränsat pris) - försök igen om {} minuter"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Följ-Endast",
     "trackOnlyAppDescription": "Appen kommer följas för uppdateringar men Obtainium kommer inte ladda ner eller installera den.",
     "trackOnlyInBrackets": "(Följ-Endast)",

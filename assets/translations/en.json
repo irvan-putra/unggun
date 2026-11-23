@@ -618,6 +618,10 @@
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Track-only",
     "trackOnlyAppDescription": "The app will be tracked for updates, but Unggun will not be able to download or install it.",
     "trackOnlyInBrackets": "(track-only)",

@@ -618,6 +618,10 @@
         "one": "Demasiadas peticións (taxa limitada) - volver a intentar en {} minuto",
         "other": "Demasiadas peticións (taxa limitada) - volver a intentar en {} minutos"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Só-seguimento",
     "trackOnlyAppDescription": "Vanse comprobar as actualizacións da app, pero Obtanium non poderá descargalas ou instalalas.",
     "trackOnlyInBrackets": "(só-seguimento)",

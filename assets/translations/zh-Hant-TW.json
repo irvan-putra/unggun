@@ -618,6 +618,10 @@
         "one": "要求過多（受速率限制） - 請在 {} 分鐘後重試",
         "other": "要求過多（受速率限制） - 請在 {} 分鐘後重試"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "僅追蹤",
     "trackOnlyAppDescription": "應用程式將會被追蹤更新，但 Obtainium 無法下載或安裝它。",
     "trackOnlyInBrackets": "（僅追蹤）",

@@ -618,6 +618,10 @@
         "one": "Πάρα πολλά αιτήματα (περιορισμός ρυθμού) - δοκιμάστε ξανά σε {} λεπτό",
         "other": "Πάρα πολλά αιτήματα (περιορισμός ρυθμού) - δοκιμάστε ξανά σε {} λεπτά"
     },
+    "tooManyRequestsAutoRetryInMinutes": {
+        "one": "Too many requests (rate limited) - queued, retrying automatically in {} minute",
+        "other": "Too many requests (rate limited) - queued, retrying automatically in {} minutes"
+    },
     "trackOnly": "Μόνο παρακολούθηση",
     "trackOnlyAppDescription": "Η εφαρμογή θα παρακολουθείται για ενημερώσεις, αλλά το Obtainium δεν θα μπορεί να τη λάβει ή να την εγκαταστήσει.",
     "trackOnlyInBrackets": "(μόνο παρακολούθηση)",
