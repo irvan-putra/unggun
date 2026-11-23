@@ -1,0 +1,52 @@
+name: key-backup
+# One-shot consolidation: encrypt this repo's signing keystore (from its
+# Actions secrets) with the recovery password in BACKUP_RECOVERY_PASSWORD and
+# commit the ciphertext to the private cadang repo. His rule 2026-11-23:
+# every signed app's keystore backup lives in cadang. Safe to re-run.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: encrypt and commit keystore backup to cadang
+        env:
+          KS_B64: ${{ secrets.UNGGUN_KEYSTORE_B64 }}
+          STORE_PASS: ${{ secrets.UNGGUN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UNGGUN_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.UNGGUN_KEY_PASSWORD }}
+          RECOVERY: ${{ secrets.BACKUP_RECOVERY_PASSWORD }}
+          CADANG_TOKEN: ${{ secrets.CADANG_WRITE_TOKEN }}
+          APP: unggun
+        run: |
+          set -euo pipefail
+          test -n "$KS_B64"; test -n "$RECOVERY"; test -n "$STORE_PASS"; test -n "$CADANG_TOKEN"
+          stage=$(mktemp -d)
+          echo "$KS_B64" | base64 -d > "$stage/$APP.jks"
+          if [ -z "${KEY_ALIAS:-}" ]; then
+            KEY_ALIAS=$(keytool -list -keystore "$stage/$APP.jks" -storepass "$STORE_PASS" 2>/dev/null | grep -m1 PrivateKeyEntry | cut -d, -f1)
+          fi
+          KP="${KEY_PASS:-$STORE_PASS}"
+          printf 'store password: %s\nkey alias: %s\nkey password: %s\n' "$STORE_PASS" "$KEY_ALIAS" "$KP" > "$stage/passwords.txt"
+          printf '%s signing key bundle\nkeystore: %s.jks (PKCS12)\nregenerated for the cadang consolidation 2026-11-23\n' "$APP" "$APP" > "$stage/README.txt"
+          tar czf /tmp/bundle.tar.gz -C "$stage" .
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$RECOVERY" --symmetric --cipher-algo AES256 --armor -o "/tmp/$APP-signing-key-backup.txt" /tmp/bundle.tar.gz
+          chk=$(mktemp -d)
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$RECOVERY" -d "/tmp/$APP-signing-key-backup.txt" > "$chk/b.tar.gz"
+          tar xzf "$chk/b.tar.gz" -C "$chk"
+          keytool -list -keystore "$chk/$APP.jks" -storepass "$STORE_PASS" -v 2>/dev/null | grep -m1 "SHA256:" | sed 's/^/restore-check /'
+          rm -rf "$stage" "$chk" /tmp/bundle.tar.gz
+          git clone --quiet "https://x-access-token:${CADANG_TOKEN}@github.com/irvan-putra/cadang.git" /tmp/cadang
+          cp "/tmp/$APP-signing-key-backup.txt" /tmp/cadang/
+          cd /tmp/cadang
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$APP-signing-key-backup.txt"
+          git commit --quiet -m "$APP signing-key backup (regenerated for consolidation)"
+          for i in 1 2 3 4 5; do
+            git pull --quiet --rebase origin main && git push --quiet origin HEAD && break
+            sleep $((RANDOM % 10 + 3))
+          done
+          echo "committed $APP backup to cadang"
