@@ -34,9 +34,9 @@
   #review-panel pre { white-space: pre-wrap; max-height: 12rem; overflow: auto; margin: 6px 0; font-size: .85rem; }
 </style>
 </head>
-<body data-version="ff253310">
+<body data-version="ae08ee75">
 <h1>unggun native-recode spec review</h1>
-<p class="sub"><a href="https://github.com/irvan-putra/unggun/blob/main/docs/NATIVE-RECODE-SPEC.md">Read the spec on GitHub</a> (commit ff253310). Go through the items below; for each, tap a status and add a note if useful. The last section is the 5 open questions - your note there is the decision. Then copy the review text and send it back.</p>
+<p class="sub"><a href="https://github.com/irvan-putra/unggun/blob/main/docs/NATIVE-RECODE-SPEC.md">Read the spec on GitHub</a> (commit ae08ee75). Go through the items below; for each, tap a status and add a note if useful. The last section is the 5 open questions - your note there is the decision. Then copy the review text and send it back.</p>
 
 <div id="filters" role="group" aria-label="Filter by section"></div>
 <div id="groups"></div>
@@ -106,7 +106,7 @@ try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
 var filter='all';
 try{filter=JSON.parse(localStorage.getItem(KEY+'-filter')||'"all"')}catch(e){filter='all'}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(KEY+'-filter',JSON.stringify(filter))}catch(e){}}
-function version(){return document.body.getAttribute('data-version')||'ff253310'}
+function version(){return document.body.getAttribute('data-version')||'ae08ee75'}
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function render(){
  var f=document.getElementById('filters');f.innerHTML='';
