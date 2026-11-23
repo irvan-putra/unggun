@@ -1,0 +1,55 @@
+name: patuh consistency gate
+
+# Family consistency checks from irvan-putra/patuh, required for unggun.
+# On every push to main: source gate on the exact pushed tree. A manual
+# dispatch also builds a debug APK of the native app and byte-checks the
+# packaged icon pre-publish, and verifies the currently live release
+# (post-publish mode, v1.* native line).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-gate:
+    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@45bf9b340bc27f6bcafbe909204d5a717c072ab1
+    with:
+      app: unggun
+      published: false
+
+  build-debug-apk:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./native/gradlew -p native assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: native/app/build/outputs/apk/debug/*.apk
+          retention-days: 1
+
+  candidate-bytes-gate:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build-debug-apk
+    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@45bf9b340bc27f6bcafbe909204d5a717c072ab1
+    with:
+      app: unggun
+      published: false
+      candidate_apk_artifact: debug-apk
+
+  verify-live-release:
+    if: github.event_name == 'workflow_dispatch'
+    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@45bf9b340bc27f6bcafbe909204d5a717c072ab1
+    with:
+      app: unggun
+      published: true
