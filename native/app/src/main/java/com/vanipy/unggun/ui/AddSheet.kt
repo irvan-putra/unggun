@@ -29,7 +29,7 @@ class AddSheet : BottomSheetDialogFragment() {
                     skipped++
                     continue
                 }
-                val entry = AppEntry(id = id, displayName = id.substringAfter('/'))
+                val entry = AppEntry(id = id, displayName = id.substringAfter('/'), includePrerelease = true)
                 if (AppStore.add(entry)) added++ else skipped++
             }
             LogStore.log("ui", "added $added app(s), skipped $skipped")
