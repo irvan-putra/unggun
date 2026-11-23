@@ -32,9 +32,9 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests
-        run: ./gradlew -p native :app:testDebugUnitTest
+        run: ./native/gradlew -p native :app:testDebugUnitTest
       - name: Debug APK
-        run: ./gradlew -p native :app:assembleDebug
+        run: ./native/gradlew -p native :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: unggun-native-debug

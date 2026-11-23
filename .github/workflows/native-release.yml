@@ -30,7 +30,7 @@ jobs:
           test -n "$VER"
           echo "version=$VER" >> "$GITHUB_OUTPUT"
       - name: Unit tests
-        run: ./gradlew -p native :app:testDebugUnitTest
+        run: ./native/gradlew -p native :app:testDebugUnitTest
       - name: Build and sign
         env:
           KS_B64: ${{ secrets.UNGGUN_KEYSTORE_B64 }}
@@ -44,7 +44,7 @@ jobs:
           export UNGGUN_STORE_PASSWORD="$KS_PASS"
           export UNGGUN_KEY_ALIAS="$KEY_ALIAS"
           export UNGGUN_KEY_PASSWORD="$KEY_PASS"
-          ./gradlew -p native :app:assembleRelease
+          ./native/gradlew -p native :app:assembleRelease
           rm -f "$RUNNER_TEMP/unggun.jks"
       - name: Verify signature, package and version
         shell: bash
