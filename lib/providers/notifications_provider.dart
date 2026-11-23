@@ -109,6 +109,7 @@ class ObtainiumNotification {
   Importance importance;
   int? progPercent;
   bool onlyAlertOnce;
+  bool ongoing;
   String? payload;
   String? appId;
   List<AndroidNotificationAction>? androidActions;
@@ -123,6 +124,7 @@ class ObtainiumNotification {
     this.channelDescription,
     this.importance, {
     this.onlyAlertOnce = false,
+    this.ongoing = false,
     this.progPercent,
     this.payload,
     this.appId,
@@ -311,7 +313,7 @@ ObtainiumNotification get completeInstallationNotification =>
     );
 
 class CheckingUpdatesNotification extends ObtainiumNotification {
-  CheckingUpdatesNotification(String appName)
+  CheckingUpdatesNotification(String appName, {super.progPercent})
     : super(
         4,
         tr('checkingForUpdates'),
@@ -320,6 +322,11 @@ class CheckingUpdatesNotification extends ObtainiumNotification {
         tr('checkingForUpdatesNotifChannel'),
         tr('checkingForUpdatesNotifDescription'),
         Importance.min,
+        // Progress updates land on the same notification id; none of them may
+        // re-alert, and the notification stays put (not swipeable) while the
+        // batch runs. It is canceled unconditionally when the batch ends.
+        onlyAlertOnce: true,
+        ongoing: true,
       );
 }
 
@@ -455,6 +462,7 @@ class NotificationsProvider {
     bool cancelExisting = false,
     int? progPercent,
     bool onlyAlertOnce = false,
+    bool ongoing = false,
     String? payload,
     List<AndroidNotificationAction>? androidActions,
     StyleInformation? style,
@@ -482,6 +490,7 @@ class NotificationsProvider {
           maxProgress: 100,
           showProgress: progPercent != null,
           onlyAlertOnce: onlyAlertOnce,
+          ongoing: ongoing,
           indeterminate: progPercent != null && progPercent < 0,
           actions: androidActions,
           styleInformation: style,
@@ -504,6 +513,7 @@ class NotificationsProvider {
     notif.importance,
     cancelExisting: cancelExisting,
     onlyAlertOnce: notif.onlyAlertOnce,
+    ongoing: notif.ongoing,
     progPercent: notif.progPercent,
     payload: notif.appId != null
         ? '$appIdTapPayloadPrefix${notif.appId}'

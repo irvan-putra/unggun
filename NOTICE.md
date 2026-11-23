@@ -11,6 +11,7 @@ Changes made in this fork:
 - Upstream release, F-Droid metadata, Docker and agent-instruction files removed; new CI and release workflows added.
 - Per-host request gate for source metadata requests (0.1.3): pauses a request class while the host reports a challenge or an exhausted rate limit, using the host's own reset hints.
 - Rate-limited update checks queue an automatic recheck once the limit window resets, foreground refreshes included, and the gate spreads its remaining budget instead of spending it in one burst (0.1.6).
+- Background update checks post an ongoing, non-swiping progress notification that moves per app checked and is canceled when the batch ends, after Mihon's library-update pattern; without foreground-service promotion, so the notification reports progress but does not extend the worker's execution window (0.1.7).
 - Other translation files still contain the word "Obtainium" in places.
 
 The upstream community directory and wiki (apps.obtainium.imranr.dev, wiki.obtainium.imranr.dev) are third-party services run by the upstream maintainer; links to them remain in the app.

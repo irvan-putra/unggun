@@ -1289,13 +1289,35 @@ _bgRunUpdateCheck(
   final MultiAppMultiError toThrow = MultiAppMultiError();
   final CheckingUpdatesNotification notif = CheckingUpdatesNotification(
     plural('apps', toCheck.length),
+    progPercent: 0,
   );
 
   try {
     unawaited(notificationsProvider.notify(notif, cancelExisting: true));
+    var lastProgressPostMs = 0;
     updates = await appsProvider.checkUpdates(
       specificIds: toCheck.map((e) => e.key).toList(),
       sp: appsProvider.settingsProvider,
+      onProgress: (completed, total, inFlight) {
+        // Mihon-style: refresh the same ongoing notification as items finish,
+        // throttled so a fast batch does not spam the notification manager;
+        // the final update always lands. The notification itself is canceled
+        // unconditionally in the finally below.
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        if (completed < total && nowMs - lastProgressPostMs < 500) return;
+        lastProgressPostMs = nowMs;
+        final names = inFlight.take(4).join(', ');
+        unawaited(
+          notificationsProvider.notify(
+            CheckingUpdatesNotification(
+              names.isEmpty
+                  ? plural('apps', toCheck.length)
+                  : '$completed/$total: $names',
+              progPercent: total > 0 ? (completed * 100 / total).round() : 0,
+            ),
+          ),
+        );
+      },
     );
   } catch (e) {
     if (e is CheckUpdatesException) {

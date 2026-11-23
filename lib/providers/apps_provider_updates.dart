@@ -169,6 +169,8 @@ extension AppsProviderUpdates on AppsProvider {
     List<String>? specificIds,
     bool forceAll = false,
     SettingsProvider? sp,
+    void Function(int completed, int total, List<String> inFlight)?
+    onProgress,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     // A check is already running. Its result may not cover the apps this
@@ -233,6 +235,9 @@ extension AppsProviderUpdates on AppsProvider {
       // once the limit window resets instead of being left for a manual
       // refresh.
       final List<MapEntry<String, RateLimitError>> rateLimited = [];
+      // Names of the apps whose checks are in flight right now, for progress
+      // reporting (Mihon-style: the notification lists what is moving).
+      final Set<String> inFlight = {};
       var lastSaveTime = DateTime.now();
       const saveInterval = Duration(seconds: 3);
 
@@ -245,6 +250,7 @@ extension AppsProviderUpdates on AppsProvider {
 
       Future<MapEntry<App, bool>?> fetchOne(String appId) async {
         final currentApp = apps[appId]?.app;
+        inFlight.add(currentApp?.name ?? appId);
         try {
           final newApp = await fetchUpdateWithHandshakeRetry(appId);
           if (newApp != null) {
@@ -277,6 +283,8 @@ extension AppsProviderUpdates on AppsProvider {
               );
             }
           }
+        } finally {
+          inFlight.remove(currentApp?.name ?? appId);
         }
         return null;
       }
@@ -287,6 +295,7 @@ extension AppsProviderUpdates on AppsProvider {
           if (i >= appIds.length) return;
           final result = await fetchOne(appIds[i]);
           completed++;
+          onProgress?.call(completed, total, List.unmodifiable(inFlight));
           // Save on a fixed time interval rather than per-app or per-N apps,
           // so the UI rebuilds a bounded number of times regardless of how
           // many apps are checked or how fast they complete.
