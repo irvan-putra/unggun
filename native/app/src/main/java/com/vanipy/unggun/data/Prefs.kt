@@ -7,6 +7,7 @@ object Prefs {
     private const val KEY_NOTIFY_UPDATES = "notify_updates"
     private const val KEY_NOTIFY_ERRORS = "notify_errors"
     private const val KEY_RATE_LIMITED_UNTIL = "rate_limited_until"
+    private const val KEY_DELETE_AFTER_INSTALL = "delete_after_install"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -18,6 +19,10 @@ object Prefs {
     var notifyErrors: Boolean
         get() = prefsHolder!!.getBoolean(KEY_NOTIFY_ERRORS, true)
         set(v) = prefsHolder!!.edit().putBoolean(KEY_NOTIFY_ERRORS, v).apply()
+
+    var deleteAfterInstall: Boolean
+        get() = prefsHolder!!.getBoolean(KEY_DELETE_AFTER_INSTALL, true)
+        set(v) = prefsHolder!!.edit().putBoolean(KEY_DELETE_AFTER_INSTALL, v).apply()
 
     var rateLimitedUntil: Long
         get() = prefsHolder!!.getLong(KEY_RATE_LIMITED_UNTIL, 0)

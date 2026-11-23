@@ -41,6 +41,12 @@
         android:text="notify when updates are available" />
 
     <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/switch_delete_after_install"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="delete apk after install (frees cache)" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
         android:id="@+id/switch_notify_errors"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

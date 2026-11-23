@@ -37,6 +37,13 @@ class InstallResultReceiver : BroadcastReceiver() {
                 } catch (_: Exception) {
                 }
                 AppStore.update(updated)
+                if (com.vanipy.unggun.data.Prefs.deleteAfterInstall) {
+                    intent.getStringExtra(EXTRA_APK_PATH)?.let { path ->
+                        if (java.io.File(path).delete()) {
+                            LogStore.log("install", "$appId: deleted cached apk")
+                        }
+                    }
+                }
                 LogStore.log("install", "$appId: installed ${updated.installedVersion}")
                 Notifier.installResult(context, updated, true, "version ${updated.installedVersion ?: "?"}")
             }
@@ -53,5 +60,6 @@ class InstallResultReceiver : BroadcastReceiver() {
         const val EXTRA_APP_ID = "app_id"
         const val EXTRA_PKG = "pkg"
         const val EXTRA_SILENT = "silent"
+        const val EXTRA_APK_PATH = "apk_path"
     }
 }

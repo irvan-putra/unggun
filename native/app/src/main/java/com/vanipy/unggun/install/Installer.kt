@@ -48,6 +48,7 @@ object Installer {
             .putExtra(InstallResultReceiver.EXTRA_APP_ID, app.id)
             .putExtra(InstallResultReceiver.EXTRA_PKG, pkg)
             .putExtra(InstallResultReceiver.EXTRA_SILENT, silentRequested)
+            .putExtra(InstallResultReceiver.EXTRA_APK_PATH, apk.absolutePath)
         val sessionId = installer.createSession(params)
         val session = installer.openSession(sessionId)
         try {

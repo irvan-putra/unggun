@@ -22,15 +22,18 @@ class SettingsSheet : BottomSheetDialogFragment() {
         val token = v.findViewById<TextInputEditText>(R.id.input_token)
         val nu = v.findViewById<MaterialSwitch>(R.id.switch_notify_updates)
         val ne = v.findViewById<MaterialSwitch>(R.id.switch_notify_errors)
+        val da = v.findViewById<MaterialSwitch>(R.id.switch_delete_after_install)
 
         token.setText(TokenStore.read(ctx))
         nu.isChecked = Prefs.notifyUpdates
         ne.isChecked = Prefs.notifyErrors
+        da.isChecked = Prefs.deleteAfterInstall
 
         v.findViewById<Button>(R.id.btn_save).setOnClickListener {
             TokenStore.store(ctx, token.text?.toString()?.trim() ?: "")
             Prefs.notifyUpdates = nu.isChecked
             Prefs.notifyErrors = ne.isChecked
+            Prefs.deleteAfterInstall = da.isChecked
             LogStore.log("ui", "settings saved (token ${if (TokenStore.hasToken(ctx)) "set" else "unset"})")
             Toast.makeText(ctx, "saved", Toast.LENGTH_SHORT).show()
             dismiss()
