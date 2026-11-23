@@ -1,6 +1,6 @@
 # Android launcher presentation
 
-Prepared for the approved0.1.5/code6 test release. Publication requires final checks and signed workflow success.
+Prepared for the requested0.1.5/code6 test release. Publication requires final checks and signed workflow success.
 
 The launcher label stays lowercase `unggun` and the bonfire artwork is unchanged. The version badge strip now reads0.1.5, regenerated with the pinned `tools/badge_icon.py X.Y.Z`; CI checks the resulting resources. Legacy, adaptive and themed icons come from the same generator, so the strip position and font match the Tuju family convention.
 
