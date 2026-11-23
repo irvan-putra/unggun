@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_refresh"
+        android:title="check all"
+        app:showAsAction="always"
+        android:icon="@android:drawable/ic_popup_sync" />
+    <item
+        android:id="@+id/action_logs"
+        android:title="logs"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_settings"
+        android:title="settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_export"
+        android:title="export list"
+        app:showAsAction="never" />
+</menu>

@@ -1,0 +1,75 @@
+name: unggun native signed release
+
+# Manual only. Builds the native release APK, signs it with the unggun key from
+# repository secrets, verifies package, version and certificate, then publishes a
+# GitHub pre-release with a sha256 sidecar. Same key and conventions as the
+# Flutter release workflow (release.yml).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPECTED_CERT_SHA256: "1F7A762C99D357B076968C9BCEFEDF45FF9B65231C60AF2D43A5160783D5BF29"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Read version
+        id: v
+        run: |
+          VER=$(sed -n 's/.*versionName = "\([0-9.]*\)".*/\1/p' native/app/build.gradle.kts | head -1)
+          test -n "$VER"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+      - name: Unit tests
+        run: ./gradlew -p native :app:testDebugUnitTest
+      - name: Build and sign
+        env:
+          KS_B64: ${{ secrets.UNGGUN_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.UNGGUN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UNGGUN_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.UNGGUN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/unggun.jks"
+          export UNGGUN_STORE_FILE="$RUNNER_TEMP/unggun.jks"
+          export UNGGUN_STORE_PASSWORD="$KS_PASS"
+          export UNGGUN_KEY_ALIAS="$KEY_ALIAS"
+          export UNGGUN_KEY_PASSWORD="$KEY_PASS"
+          ./gradlew -p native :app:assembleRelease
+          rm -f "$RUNNER_TEMP/unggun.jks"
+      - name: Verify signature, package and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VER="${{ steps.v.outputs.version }}"
+          APK=$(ls native/app/build/outputs/apk/release/app-release.apk)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/cert.txt
+          GOT=$(grep -m1 'certificate SHA-256 digest' /tmp/cert.txt | awk '{print toupper($NF)}')
+          test -n "$EXPECTED_CERT_SHA256"
+          test "$GOT" = "$EXPECTED_CERT_SHA256"
+          if "$BT/apksigner" verify --print-certs "$APK" | grep -q 'DEBUG'; then exit 1; fi
+          "$BT/aapt" dump badging "$APK" | tee /tmp/badging.txt | head -3
+          grep -q "package: name='com.vanipy.unggun'" /tmp/badging.txt
+          grep -q "versionName='${VER}'" /tmp/badging.txt
+          cp "$APK" "unggun-v${VER}.apk"
+          sha256sum "unggun-v${VER}.apk" | tee "unggun-v${VER}.apk.sha256"
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${{ steps.v.outputs.version }}"
+          cat > notes.md <<NOTES
+          unggun ${VER}: native (Kotlin) recode of the GitHub-only updater, per docs/NATIVE-RECODE-SPEC.md revision 2. Scope: GitHub source, stock Android installer, English, manual checks with 4-way parallelism and rate-limit persistence, ABI/name APK choice, track-only, logs screen, notifications for updates/downloads/installs/errors. Installs over the Flutter build (same package and signing key); after a fresh install the first update of each app may need one tap until this build is its installer of record. Known-unproven on real devices: silent-update behavior and background survival on Samsung - those need phone confirmation. Signed with the unggun key (certificate SHA-256 ${EXPECTED_CERT_SHA256}). SHA-256 of the APK is in the attached .sha256 file.
+          NOTES
+          gh release create "v${VER}" "unggun-v${VER}.apk" "unggun-v${VER}.apk.sha256" \
+            --title "unggun ${VER} (native)" --notes-file notes.md --prerelease --target "${GITHUB_SHA}"

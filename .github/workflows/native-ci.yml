@@ -1,0 +1,41 @@
+name: unggun native ci
+
+# CI for the native (Kotlin) recode under native/. Independent of the Flutter app.
+on:
+  push:
+    branches: [main]
+    paths: [native/**, .github/workflows/native-ci.yml]
+  pull_request:
+    paths: [native/**, .github/workflows/native-ci.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify deterministic launcher resources
+        run: |
+          pip install Pillow==12.3.0 CairoSVG==2.8.2
+          python native/tools/make_icons.py "$(sed -n 's/.*versionName = "\([0-9.]*\)".*/\1/p' native/app/build.gradle.kts | head -1)"
+          git diff --exit-code -- native/app/src/main/res
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests
+        run: ./gradlew -p native :app:testDebugUnitTest
+      - name: Debug APK
+        run: ./gradlew -p native :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unggun-native-debug
+          path: native/app/build/outputs/apk/debug/*.apk

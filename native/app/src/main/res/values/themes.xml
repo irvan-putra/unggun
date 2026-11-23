@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Unggun" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#E84A24</item>
+        <item name="colorSecondary">#FF9228</item>
+        <item name="colorTertiary">#FFDA6E</item>
+    </style>
+</resources>
