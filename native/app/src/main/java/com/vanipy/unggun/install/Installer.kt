@@ -33,8 +33,11 @@ object Installer {
         var silentRequested = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
-                val src = pm.getInstallSourceInfo(pkg)
-                if (src.installingPackageName == context.packageName) {
+                // Silent when unggun is the installer of record, or when unggun is
+                // updating itself (Android 12+ allows both without the confirm prompt).
+                val isSelf = pkg == context.packageName
+                val src = if (isSelf) null else pm.getInstallSourceInfo(pkg)
+                if (isSelf || src?.installingPackageName == context.packageName) {
                     params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
                     silentRequested = true
                 }

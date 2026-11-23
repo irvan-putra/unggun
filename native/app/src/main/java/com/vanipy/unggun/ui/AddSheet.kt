@@ -15,6 +15,10 @@ import com.vanipy.unggun.data.LogStore
 
 class AddSheet : BottomSheetDialogFragment() {
 
+    companion object {
+        private const val SELF_REPO = "irvan-putra/unggun"
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val v = inflater.inflate(R.layout.sheet_add, container, false)
         val input = v.findViewById<TextInputEditText>(R.id.input_urls)
@@ -30,6 +34,16 @@ class AddSheet : BottomSheetDialogFragment() {
                     continue
                 }
                 val entry = AppEntry(id = id, displayName = id.substringAfter('/'), includePrerelease = true)
+                // Self-tracking: seed our own package id + version so the first check
+                // does not flag the already-installed version as an update.
+                if (id.equals(SELF_REPO, ignoreCase = true)) {
+                    entry.installedPackageId = requireContext().packageName
+                    try {
+                        val pi = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                        entry.installedVersion = pi.versionName
+                    } catch (_: Exception) {
+                    }
+                }
                 if (AppStore.add(entry)) added++ else skipped++
             }
             LogStore.log("ui", "added $added app(s), skipped $skipped")

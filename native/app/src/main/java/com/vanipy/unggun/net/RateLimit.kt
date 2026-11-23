@@ -21,7 +21,7 @@ object RateLimit {
         val remaining = h["x-ratelimit-remaining"]?.toLongOrNull()
         val reset = h["x-ratelimit-reset"]?.toLongOrNull()
         if ((status == 403 || status == 429) && remaining == 0L && reset != null) {
-            return RateLimited(reset, "rate limit exhausted, resets at $reset")
+            return RateLimited(reset, "rate limit exhausted, resets at ${formatHhMm(reset)}")
         }
         return null
     }
