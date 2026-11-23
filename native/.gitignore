@@ -2,3 +2,6 @@
 build/
 local.properties
 gradle/user-home/
+
+# root .gitignore has a bare "data" rule (upstream); the app package dir must not be ignored
+!data/
