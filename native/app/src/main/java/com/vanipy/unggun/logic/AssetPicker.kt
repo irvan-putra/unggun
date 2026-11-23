@@ -37,7 +37,7 @@ object AssetPicker {
         var idx = n.indexOf(t)
         while (idx >= 0) {
             val after = idx + t.length
-            if (after >= n.length || !n[after].isLetterOrDigit()) return true
+            if (after >= n.length || (!n[after].isLetterOrDigit() && n[after] != '_')) return true
             idx = n.indexOf(t, idx + 1)
         }
         return false
