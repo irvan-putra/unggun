@@ -32,6 +32,7 @@ import 'package:obtainium/providers/apps_provider_updates.dart';
 import 'package:obtainium/utils/bg_update_guards.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
+import 'package:update_check_service/update_check_service.dart';
 
 export 'apps_provider_import_export.dart';
 export 'apps_provider_install.dart';
@@ -1292,8 +1293,25 @@ _bgRunUpdateCheck(
     progPercent: 0,
   );
 
+  // Mihon-style keep-alive: promote the check to a dataSync foreground
+  // service so Android treats it as user-visible work and does not kill the
+  // process mid-check. The service owns notification id 4 while promoted, so
+  // progress routes through it instead of flutter_local_notifications. When
+  // the system refuses the start (Android 12+ background-start restrictions)
+  // or the plugin is unavailable, fall back to the notification-only path
+  // shipped in 0.1.7.
+  final bool promoted = await UpdateCheckServiceApi.start(
+    title: tr('checkingForUpdates'),
+    text: plural('apps', toCheck.length),
+  );
+  if (promoted) {
+    AppLogger.info('BG update task: Promoted to foreground service.');
+  }
+
   try {
-    unawaited(notificationsProvider.notify(notif, cancelExisting: true));
+    if (!promoted) {
+      unawaited(notificationsProvider.notify(notif, cancelExisting: true));
+    }
     var lastProgressPostMs = 0;
     updates = await appsProvider.checkUpdates(
       specificIds: toCheck.map((e) => e.key).toList(),
@@ -1302,21 +1320,33 @@ _bgRunUpdateCheck(
         // Mihon-style: refresh the same ongoing notification as items finish,
         // throttled so a fast batch does not spam the notification manager;
         // the final update always lands. The notification itself is canceled
-        // unconditionally in the finally below.
+        // unconditionally in the finally below (with the service, on stop).
         final nowMs = DateTime.now().millisecondsSinceEpoch;
         if (completed < total && nowMs - lastProgressPostMs < 500) return;
         lastProgressPostMs = nowMs;
         final names = inFlight.take(4).join(', ');
-        unawaited(
-          notificationsProvider.notify(
-            CheckingUpdatesNotification(
-              names.isEmpty
-                  ? plural('apps', toCheck.length)
-                  : '$completed/$total: $names',
-              progPercent: total > 0 ? (completed * 100 / total).round() : 0,
+        final text = names.isEmpty
+            ? plural('apps', toCheck.length)
+            : '$completed/$total: $names';
+        if (promoted) {
+          unawaited(
+            UpdateCheckServiceApi.update(
+              title: tr('checkingForUpdates'),
+              text: text,
+              progress: completed,
+              max: total,
             ),
-          ),
-        );
+          );
+        } else {
+          unawaited(
+            notificationsProvider.notify(
+              CheckingUpdatesNotification(
+                text,
+                progPercent: total > 0 ? (completed * 100 / total).round() : 0,
+              ),
+            ),
+          );
+        }
       },
     );
   } catch (e) {
@@ -1357,7 +1387,11 @@ _bgRunUpdateCheck(
       rethrow;
     }
   } finally {
-    unawaited(notificationsProvider.cancel(notif.id));
+    if (promoted) {
+      unawaited(UpdateCheckServiceApi.stop());
+    } else {
+      unawaited(notificationsProvider.cancel(notif.id));
+    }
   }
 
   AppLogger.info('BG update task: Done checking for updates.');

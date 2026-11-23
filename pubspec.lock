@@ -1198,6 +1198,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  update_check_service:
+    dependency: "direct main"
+    description:
+      path: "plugins/update_check_service"
+      relative: true
+    source: path
+    version: "0.0.1"
   upower:
     dependency: transitive
     description:

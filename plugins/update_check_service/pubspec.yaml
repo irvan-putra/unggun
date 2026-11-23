@@ -1,0 +1,22 @@
+name: update_check_service
+description: >-
+  Foreground-service promotion for update checks (Mihon-style keep-alive).
+  Local plugin so its MethodChannel is registered in every Flutter engine,
+  including the headless engine Workmanager spawns for background checks.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.vanipy.unggun.update_check_service
+        pluginClass: UpdateCheckServicePlugin
