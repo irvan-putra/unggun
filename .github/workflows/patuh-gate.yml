@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   source-gate:
-    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@e5dac25cda1c64736accd19f9b49f8f044a1848b
+    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@64e0911598c93a7970444a9431d5b3a29bd940a3
     with:
       app: unggun
       published: false
@@ -41,7 +41,7 @@ jobs:
   candidate-bytes-gate:
     if: github.event_name == 'workflow_dispatch'
     needs: build-debug-apk
-    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@e5dac25cda1c64736accd19f9b49f8f044a1848b
+    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@64e0911598c93a7970444a9431d5b3a29bd940a3
     with:
       app: unggun
       published: false
@@ -49,7 +49,7 @@ jobs:
 
   verify-live-release:
     if: github.event_name == 'workflow_dispatch'
-    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@e5dac25cda1c64736accd19f9b49f8f044a1848b
+    uses: irvan-putra/patuh/.github/workflows/release-gate.yml@64e0911598c93a7970444a9431d5b3a29bd940a3
     with:
       app: unggun
       published: true
