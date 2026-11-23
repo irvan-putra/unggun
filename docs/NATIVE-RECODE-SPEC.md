@@ -1,72 +1,86 @@
-# Recoding Unggun natively: specification (draft for decision)
+# Recoding Unggun natively: specification (revision 2, owner decisions applied)
 
-Status: research document, 2026-11-23. This is a spec for a from-scratch native (Kotlin) recode of Unggun without Flutter. Nothing here is built. The owner reads this, then decides whether to build it. Requested by Irvan on 2026-11-23 after the Flutter-to-native effort discussion; the alternative middle path (a small Kotlin foreground-service glue inside the current Flutter app) is being shipped separately.
+Status: 2026-11-23. A spec for a from-scratch native (Kotlin) recode of Unggun without Flutter. Nothing here is built. Revision 2 applies the owner's review answers (draft at commit `ff253310`). Build starts only on his go.
 
-Labeling convention: **[verified]** means read directly from the source tree at commit `3141245a` (main, 2026-11-23). **[inferred]** means concluded from behavior, naming, or upstream Obtainium documentation, not re-verified line by line. Anything unlabeled in a list inherits the label of its section heading.
+Labels: **[verified]** read from the source tree at `3141245a`. **[inferred]** concluded from behavior or upstream docs. **[decision]** the owner's answer, quoted from his review on 2026-11-23.
 
-## 0. What Unggun is today
+## 0. Goal
 
-[verified] Unggun is a fork of Obtainium 1.7.4 (upstream commit `35c3e7f`, 2026-11-01) with its own identity: package `com.vanipy.unggun`, bonfire icon, self-update pointing at `irvan-putra/unggun`, version numbering restarted at 0.1.x. It tracks APK releases published elsewhere (GitHub releases and 28 other source types), checks for updates on a schedule, downloads APKs, and installs them (prompt-free where Android allows). Size: ~37,700 lines of Dart, 63 dependencies, 62 test files (501 tests), 35 locale files. Android only, minSdk 26.
+[decision] "i care more about functionalities (easier apk updates other than me hunting them one by one)" and "i just want to keep updated, i am not married to it". The native app exists to do one job: track the GitHub projects he installs, tell him when a new release is out, and install it with as little tapping as Android allows. Everything else in Obtainium 1.7.4 is out unless it serves that job.
 
-## 1. Non-negotiable continuity constraints
+## 1. Scope, as decided
 
-1. **[verified] Same signing key.** The native app must be signed with the existing unggun key (certificate SHA-256 `1F7A762C99D357B076968C9BCEFEDF45FF9B65231C60AF2D43A5160783D5BF29`, held in GitHub Actions secrets with an encrypted offline backup). Same package name + same key is what lets the native build install over the Flutter build in place, keeping its role as installer of record for every app it has updated. A new key forces an uninstall, losing the app list and - worse - losing installer-of-record status for the apps Unggun maintains, which brings back one prompted install per app.
-2. **[verified] Same package name** `com.vanipy.unggun`, so Android treats the recode as an update.
-3. **Data migration.** [verified] App data lives in SharedPreferences (app list as JSON, settings as keys). [inferred] The realistic migration is the existing export/import: export JSON from the Flutter build, install the native build over it, import. A direct SharedPreferences read is technically possible (same file) but fragile across an engine swap; treat export/import as the supported path.
-4. **[verified] Existing export format is the compatibility contract.** The native app must read exports produced by 0.1.x (app array with per-app `additionalSettings` maps, optional settings section; a plain-text URL list is also accepted as import input).
+| Topic | Decision | Source |
+|---|---|---|
+| Sources | GitHub only | "Github only" |
+| Installer | Stock Android installer only (no root, no Shizuku) | "stock only" |
+| Upstream | Frozen at Obtainium 1.7.4 semantics; no watching upstream | "let's just freeze" |
+| Languages | English only | "english only" |
+| Screens | Only what is needed: app list and logs. Add/import/settings can be sheets or sections of one screen | "just screens and logs we needed", "could be just one screen" |
+| Migration | None. Fresh install, set up again | "no migration needed", "i am okay with uninstall then install & setup again" |
+| Export format and data model | No compatibility contract. Free to design | "i don't care about compability" |
+| Notification channels | Rebuild fresh | "it's okay if we rebuild the notifications" |
+| Rate-limit machinery | Reinvent as needed, no port of 0.1.3/0.1.6 | "we can reinvent them as we need" |
+| Install flows | Drop the optional ones (see 5) | "seems complicated, maybe we don't need all of them" |
+| Behavior parity | Not required | "no need for exact same behaviors" |
+| Background checks | Not required for v1; add after | "if automatic is hard for first version, then let's develop it later" |
+| Mihon-style foreground service | Optional, comes with background checking | "maybe ... not married to it" |
 
-## 2. Screens and user flows
+## 2. Package name and signing key (changed from draft)
 
-[verified] Eleven pages exist today (lib/pages): home (app list with update badges, categories, search, sort, mass-update), app detail (per-app settings, changelog, install/update/track-only actions), add app (URL entry, source detection, source-specific options, search for sources that support it), import/export, settings (global: check interval, background guards, installer mode, notifications, categories, source configs), logs, pinned-certificates editor, pin-set editor, update health, per-app additional options. Components (~4.7k lines) include the generated settings form system, category chips, and the app card.
+The draft called these non-negotiable. With no migration needed, they are now a recommendation, not a constraint.
 
-Recode scope decision (his call): a native recode can ship the same eleven screens in Compose, or a deliberately smaller set (list, detail, add, import/export, settings). The generated-form settings system is the single largest UI component; [inferred] it exists because 29 sources each declare option schemas. A smaller source set (section 3) shrinks it directly.
+Recommended default: keep package `com.vanipy.unggun` and the existing unggun signing key (certificate SHA-256 `1F7A762C99D357B076968C9BCEFEDF45FF9B65231C60AF2D43A5160783D5BF29`). It costs nothing and keeps the in-place update path open, so he is not forced to uninstall. If he prefers a clean start with a new package name, that also works, but then both apps can sit side by side until he removes the old one.
 
-## 3. Sources and their behaviors
+One thing to know before uninstalling the Flutter build: Android remembers which app installed each APK. Apps Unggun installed can update silently later only while the installer of record is still installed. After a fresh native install, the first update of each tracked app may ask for one tap, then the native app becomes the installer of record. [inferred] from Android's update-owner rules, to be confirmed on his phone.
 
-[verified] 29 source implementations exist: GitHub, GitHubStars, GitLab, Codeberg, Sourcehut, F-Droid, FdroidRepo, IzzyOnDroid, HTML (generic), DirectApkLink, APKMirror, APKPure, Aptoide, Uptodown, APK4Free, CoolApk, Farsroid, Itch.io, Jenkins, LiteApks, NeutronCode, Rockmods, RuStore, SamsungGalaxyStore, SourceForge, TelegramApp, Tencent, VivoAppStore, HuaweiAppGallery.
+## 3. What the app does (v1)
 
-[verified] The source contract (AppSource base class): host matching with optional subdomains; URL standardization; request headers per source config; APK URL extraction with ABI/asset filters, zip/tarball inclusion; version extraction (standard or regex override); release date and changelog extraction; prerelease/include-latest toggles; track-only enforcement flags; per-source request pacing via the host gate.
+1. **Track.** Add a GitHub repo by URL or `owner/repo`. Also accept a plain-text list of URLs (he has used this to bring in 19 apps; keep it as the bulk-add path). No export/import of app records is required, so re-adding is the setup step.
+2. **Check (manual).** A refresh action checks all tracked apps and marks the ones with a newer release. Uses the GitHub releases API. Honors prerelease on/off per app. Optional personal access token to raise the limit from 60 to 5000 requests per hour.
+3. **Install.** Download the chosen APK asset with a progress notification, then install through the stock PackageInstaller. Per-app APK choice: pick by ABI and an optional name filter, remember the choice. Track-only per app (notify, never install).
+4. **Logs.** A readable log screen of checks, downloads, installs and errors. This is how he sees why something failed.
+5. **Notify.** A small set of new channels: updates available, install result, errors, and downloads (progress). Exact set is the builder's choice.
 
-[verified] His tracked set is GitHub-only today (the 19 imported apps are all GitHub repos, prerelease tracking on). GitHub source specifics verified from code: API host configurable (proxy prefix), optional PAT for 5000/hour, x-ratelimit-remaining/reset honored, repo-rename detection via redirect probe, releases or releases/latest depending on prerelease setting, asset filtering with zips/tarballs, stars variant.
-
-Scope decision (his call): the native recode needs GitHub + DirectApkLink + HTML to cover his usage; each additional source is its own parser to port and test. [inferred] Porting all 29 is the bulk of parser effort; porting 3-5 is days, not weeks.
+[inferred] Mass "update all", pinning, categories, search and sort are not in v1. Add only if he misses them.
 
 ## 4. Update checking
 
-[verified] Foreground (manual refresh): apps sorted by last check time, checked with 4-way concurrency; per-source prefetch hook; per-app failure stamped so a failing app waits one full interval before retry (not every 15 minutes); repo renames queued for user confirmation; results saved in batches every 3 seconds to bound UI rebuilds.
+v1: manual refresh, with up to 4 apps in parallel and a failure for one app never blocks the others. Rate limits: read `x-ratelimit-remaining` and `x-ratelimit-reset` and `Retry-After` from GitHub, stop requests until reset, and say so in the log and the UI ("limit hit, retry after HH:MM"). Persist the block so a restart does not hammer the API. This is the small version of what 0.1.3 and 0.1.6 do; the queued automatic retry and request pacing come with background checking.
 
-[verified] Background: WorkManager periodic task every 15 minutes (the OS minimum); the app decides per run whether each app is due (default interval 360 minutes). WiFi/charging guards can restrict checks or installs. Failed checks retry with escalating delay up to 4 attempts; rate-limit failures wait for the source's own reset hint rather than the cap. The task then notifies updates and (if enabled) silently installs what it can.
+v1.1 (after v1 is in his hands): background checking. A WorkManager task checks apps that are due (default every 6 hours) and, when running, promotes itself to a foreground service of type `dataSync` with one ongoing progress notification (the Mihon pattern, `setForeground`, throttled updates, canceled in `finally`). That is what keeps Android from killing the check halfway, and it is the reason this recode was proposed. It is also where silent installs of ready updates in order, Unggun last, are added. [verified] The Flutter app has this as 0.1.8 already.
 
-[verified] Rate limiting (0.1.3, 0.1.6): a per-host request gate bounds concurrency per host (default 2), pauses a request class when the host reports a challenge (cf-mitigated, 5 minutes) or an exhausted quota (x-ratelimit-remaining 0 until x-ratelimit-reset, Retry-After, or secondary-limit body), persists blocks across restarts via SharedPreferences, spreads the remaining budget across the window once <= 15 requests remain (capped at 10s between requests), and - since 0.1.6 - queues rate-limited apps on a one-off background recheck at the reset time, including after a manual refresh, with the message "queued, retrying automatically in N minutes".
+## 5. Install flows (cut down)
 
-## 5. Install and update flows
+Kept: stock PackageInstaller session; determinate download notification with cancel; ABI/name filter for choosing the APK; track-only.
+Dropped for v1: root and Shizuku installer modes, external-install handoff, minimum update age (supply-chain delay), preferred-index and version-regex overrides, zip/tarball extraction. [inferred] Add back individually if he hits a real need. The minimum-update-age filter is the one worth reconsidering later because it is a safety feature.
 
-[verified] Installer modes: stock (PackageInstaller session, prompt-free when Android's installer-of-record/update-owner conditions hold), root (shell), Shizuku (with pretend-to-be-Galaxy-Store/Google-Play options), and an external-install handoff. Downloads show determinate progress notifications with a cancel action; APK selection honors preferred index, ABI and asset filters, version-extraction regex, and a minimum update age (supply-chain delay) that suppresses too-new releases. Track-only apps notify but never download. After a background check, silently installable updates install in order with Unggun itself last.
+## 6. Data
 
-## 6. Background keep-alive requirement (the reason this spec exists)
+A single local store (Room, or DataStore plus JSON). Per app: repo, display name, installed version, latest version, chosen asset, prerelease flag, track-only flag, last check time, failure count, release notes and URL. Settings: GitHub token (stored with Android Keystore protection, never logged), check interval (v1.1), notification toggles. No requirement to match the old 22-field record or old export JSON. A simple export of his own list as text (one URL per line) is enough for backup, and it is the same format the bulk-add accepts.
 
-[verified] 0.1.7 ships an ongoing, per-app progress notification on the check path (Mihon pattern minus foreground promotion - the Flutter workmanager plugin exposes no setForeground). Native design for the recode, [verified] after Mihon (`LibraryUpdateWorker`/`LibraryUpdateNotifier`, mihonapp/mihon): the update-check Worker calls `setForeground` with a `ForegroundInfo` typed `FOREGROUND_SERVICE_TYPE_DATA_SYNC`; one cached ongoing notification (`setOngoing(true)`, `setOnlyAlertOnce(true)`, cancel action broadcasting to a receiver that cancels the work) shows a determinate bar updated before and after each app, throttled to 500ms, canceled unconditionally in `finally`. In a native recode this is the default shape, not glue.
+## 7. Testing
 
-## 7. Data model
+Parsers first, UI second still holds in spirit, but it is now small: the GitHub release parser, asset filter and version comparison are pinned with fixtures taken from real GitHub responses (his 19 apps are a ready source of them) and JUnit tests. Rate-limit handling gets unit tests with fake headers. Then an emulator smoke test in CI, as today: install, launch, bulk-add through the file picker, check against a recorded fixture, install a test APK. What no CI test can prove: silent-update behavior and background survival on his Samsung. Those need his phone and are called out as unverified until he confirms.
 
-[verified] The App record (22 fields): id, url, author, name, installedVersion, latestVersion, apkUrls, otherAssetUrls, preferredApkIndex, additionalSettings (per-source/per-app option map), lastUpdateCheck, pinned, disabled, categories, releaseDate, changeLog, releaseUrl, overrideSource, allowIdChange, pendingRepoRenameUrl, apkSizeBytes, latestVersionChangedAt, consecutiveFailedChecks, isArchived, newerReleasesFilteredOut, updateHealthEnabled, updateHealthDismissedVersion. Settings live as flat SharedPreferences keys (check interval, guards, installer mode, notification prefs, category filters, export options, per-source config). [inferred] A native recode should keep the same JSON field names in export files (compatibility contract, section 1.4) and can store internally however it likes (Room or DataStore + JSON).
+## 8. Upstream
 
-## 8. Notifications
+Frozen at Obtainium 1.7.4 semantics for the GitHub source. No tracking of upstream. If GitHub changes its API in a way that breaks checks, that is a normal bug fix.
 
-[verified] Nine channels exist: UPDATES_AVAILABLE (max importance), APPS_UPDATED, APPS_POSSIBLY_UPDATED, BG_UPDATE_CHECK (min importance; ongoing progress since 0.1.7), BG_UPDATE_CHECK_ERROR, APP_DOWNLOADING (progress + cancel), FILE_DOWNLOADED, COMPLETE_INSTALL (max), APPS_REMOVED. The recode should reuse these channel IDs so user channel settings carry over. [inferred] Channel IDs are stored per app package, so same-package continuity applies here too.
+## 9. Effort (revised)
 
-## 9. Testing strategy for the recode
+Earlier text said "3-6 weeks focused work". That figure was a human-engineer-equivalent number for 29 sources, eleven screens and 35 locales. It was a bad fit for how this work is actually done and it was not labeled as such. With the scope above it does not apply.
 
-[verified] The current safety net is 501 tests: source parsers against fixtures, the host gate, rate-limit queue/retry, import/export round-trips, version/regex utilities, notification shapes, translation-shape checks, plus an emulator smoke (install, launch, URL-list import through the file picker). [inferred] The pragmatic port: parser fixtures and expected outputs transfer verbatim (they are data), so the Kotlin parsers can be pinned to identical behavior first; provider/logic tests rewrite as JUnit; the emulator smoke ports as an instrumentation test. Parsers-green-before-UI is the order that keeps the recode honest.
+Estimate for the agent build, stated as a range because it is not measured:
 
-## 10. Open questions for the owner
+- v1 (GitHub parser, rate-limit handling, stock installer, one list screen plus add and logs, notifications, CI with emulator smoke, signed prerelease APK): about 1 to 2 days of working time, assuming no surprises from the stock installer.
+- v1.1 (background checks with foreground service, silent installs in order): another day or so, mostly because it can only be proven on his phone.
 
-1. Screen set: all eleven, or the smaller five-screen set (section 2)?
-2. Source set: GitHub + DirectApkLink + HTML only, or which others?
-3. Root and Shizuku installer modes: keep both, or stock-only for v1 of the native app? (His phone uses stock.)
-4. Upstream: freeze at Obtainium 1.7.4 semantics, or keep watching upstream and hand-port selected fixes?
-5. Locale set: English + Indonesian only, or convert all 35?
+The time that does not shrink is his: installing builds, trying them, and telling me what feels wrong. Each device round trip adds hours of waiting, not minutes of work. The main risk is not code volume. It is Android's installer rules (silent updates need the right installer-of-record conditions) and background limits on Samsung, neither of which an emulator reproduces faithfully.
 
-## 11. Effort sketch (unchanged from the earlier assessment, now against this spec)
+## 10. Open questions
 
-[verified from the tree] Full port with tests: order of 3-6 weeks focused work with the reduced source/screen set, longer for all 29 sources. Signing/package continuity is satisfied at build time; the migration story for users (one person) is export-then-import. The middle-path foreground-service glue for the current Flutter app ships independently as 0.1.8 and does not block this decision.
+None blocking. Two defaults assumed, easy to flip:
+
+1. Keep package name and signing key (section 2), yes unless he wants a clean break.
+2. Background checking waits for v1.1 (section 4), per his answer.
